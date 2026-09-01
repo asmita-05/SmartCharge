@@ -76,6 +76,19 @@ The system demonstrates:
 - Data Consistency
 
 ---
+## System Architecture
+
+The SmartCharge system follows a layered architecture consisting of users, frontend interface, backend server, database, chatbot, charging stations, and EV chargers.
+
+The **frontend** provides the user interface through which customers, operators, and administrators interact with the system. Requests are sent to the **backend server** through REST API calls.
+
+The **backend server** contains the core business logic and scheduling engine. It communicates with the database for storing and retrieving users, charging stations, charging sessions, and payment information.
+
+The system also integrates a **chatbot** that allows users to make queries and receive information through an intelligent assistant. The backend communicates with charging stations to receive real-time charging data and control charger operations.
+
+### Architecture Diagram
+
+![SmartCharge System Architecture](./architecture.png)
 
 ##  Chatbot
 
