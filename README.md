@@ -42,7 +42,7 @@ The main objectives of SmartCharge are:
 
 ---
 
-## 🧠 Core Concepts
+## Core Concepts
 
 ### Operating System Concepts
 
