@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCharge - Charger Management</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #475569;
+        }
+
+        .back-btn {
+            color: #475569;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            color: #64748b;
+        }
+
+        .message {
+            display: none;
+            padding: 13px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        .success {
+            display: block;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            display: block;
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            background: white;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #475569;
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #475569;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .primary-btn:hover {
+            background: #334155;
+        }
+
+        .charger-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .charger-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .charger-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .charger-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            padding: 6px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-available {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-occupied {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-unavailable {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-maintenance {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .charger-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .detail {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 7px;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .charger-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .available-btn {
+            background: #16a34a;
+        }
+
+        .unavailable-btn {
+            background: #f59e0b;
+        }
+
+        .maintenance-btn {
+            background: #7c3aed;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+        }
+
+        .filter {
+            margin-bottom: 15px;
+        }
+
+        .loading,
+        .empty {
+            text-align: center;
+            padding: 30px;
+            color: #64748b;
+        }
+
+        .loading {
+            color: #1e88e5;
+        }
+
+        @media (max-width: 850px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 550px) {
+            .navbar {
+                padding: 14px 18px;
+            }
+
+            .charger-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .charger-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="brand">⚙ SmartCharge Operator</div>
+
+    <a href="dashboard.html" class="back-btn">
+        ← Dashboard
+    </a>
+</nav>
+
+<main class="container">
+
+    <div class="header">
+        <h1>Charger Management</h1>
+        <p>Manage individual chargers and their operational status.</p>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <div class="content">
+
+        <!-- Add Charger -->
+        <section class="card">
+
+            <h2>Add Charger</h2>
+
+            <form id="chargerForm">
+
+                <div class="form-group">
+                    <label for="station">
+                        Station
+                    </label>
+
+                    <select id="station" required>
+                        <option value="">
+                            Loading stations...
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="chargerType">
+                        Charger Type
+                    </label>
+
+                    <input
+                        type="text"
+                        id="chargerType"
+                        placeholder="e.g. DC Fast Charger"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="connectorType">
+                        Connector Type
+                    </label>
+
+                    <select id="connectorType" required>
+                        <option value="">Select connector</option>
+                        <option value="CCS2">CCS2</option>
+                        <option value="CHAdeMO">CHAdeMO</option>
+                        <option value="TYPE2">Type 2</option>
+                        <option value="TYPE1">Type 1</option>
+                        <option value="GB/T">GB/T</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="powerKw">
+                        Charging Power (kW)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="powerKw"
+                        min="0.1"
+                        step="0.1"
+                        placeholder="e.g. 60"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="status">
+                        Initial Status
+                    </label>
+
+                    <select id="status">
+                        <option value="AVAILABLE">
+                            AVAILABLE
+                        </option>
+                        <option value="UNAVAILABLE">
+                            UNAVAILABLE
+                        </option>
+                        <option value="MAINTENANCE">
+                            MAINTENANCE
+                        </option>
+                    </select>
+                </div>
+
+                <button
+                    type="submit"
+                    class="primary-btn"
+                    id="saveButton"
+                >
+                    Add Charger
+                </button>
+
+            </form>
+
+        </section>
+
+        <!-- Charger List -->
+        <section class="card">
+
+            <h2>Existing Chargers</h2>
+
+            <div class="filter">
+                <select id="stationFilter">
+                    <option value="">All Stations</option>
+                </select>
+            </div>
+
+            <div
+                id="chargerList"
+                class="charger-list"
+            >
+                <div class="loading">
+                    Loading chargers...
+                </div>
+            </div>
+
+        </section>
+
+    </div>
+
+</main>
+
+<script>
+
+    const API_BASE_URL =
+        ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+
+    const storedOperator =
+        localStorage.getItem(
+            "smartchargeOperator"
+        );
+
+    if (!storedOperator) {
+        window.location.href = "login.html";
+    }
+
+    let stations = [];
+    let chargers = [];
+
+    const chargerForm =
+        document.getElementById("chargerForm");
+
+    const stationSelect =
+        document.getElementById("station");
+
+    const stationFilter =
+        document.getElementById("stationFilter");
+
+    const chargerList =
+        document.getElementById("chargerList");
+
+    const message =
+        document.getElementById("message");
+
+
+    loadPageData();
+
+
+    stationFilter.addEventListener(
+        "change",
+        function () {
+            renderChargers();
+        }
+    );
+
+
+    chargerForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+            const stationId =
+                Number(stationSelect.value);
+
+            const powerKw =
+                Number(
+                    document.getElementById(
+                        "powerKw"
+                    ).value
+                );
+
+
+            if (!stationId) {
+                showMessage(
+                    "Please select a station.",
+                    "error"
+                );
+                return;
+            }
+
+
+            if (powerKw <= 0) {
+                showMessage(
+                    "Charging power must be greater than zero.",
+                    "error"
+                );
+                return;
+            }
+
+
+            const chargerData = {
+
+                chargerType:
+                    document.getElementById(
+                        "chargerType"
+                    ).value.trim(),
+
+                connectorType:
+                    document.getElementById(
+                        "connectorType"
+                    ).value,
+
+                powerKw: powerKw,
+
+                status:
+                    document.getElementById(
+                        "status"
+                    ).value
+            };
+
+
+            const saveButton =
+                document.getElementById(
+                    "saveButton"
+                );
+
+            saveButton.disabled = true;
+            saveButton.textContent =
+                "Adding...";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_BASE_URL}/chargers/station/${stationId}`,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    chargerData
+                                )
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    const errorText =
+                        await response.text();
+
+                    throw new Error(
+                        errorText ||
+                        "Unable to create charger."
+                    );
+                }
+
+
+                showMessage(
+                    "Charger added successfully.",
+                    "success"
+                );
+
+
+                chargerForm.reset();
+
+                loadPageData();
+
+
+            } catch (error) {
+
+                showMessage(
+                    error.message ||
+                    "Unable to connect to the server.",
+                    "error"
+                );
+
+            } finally {
+
+                saveButton.disabled = false;
+                saveButton.textContent =
+                    "Add Charger";
+            }
+        }
+    );
+
+
+    async function loadPageData() {
+
+        chargerList.innerHTML =
+            '<div class="loading">Loading chargers...</div>';
+
+
+        try {
+
+            const [
+                stationsResponse,
+                chargersResponse
+            ] = await Promise.all([
+
+                fetch(
+                    `${API_BASE_URL}/stations`
+                ),
+
+                fetch(
+                    `${API_BASE_URL}/chargers`
+                )
+
+            ]);
+
+
+            if (
+                !stationsResponse.ok ||
+                !chargersResponse.ok
+            ) {
+                throw new Error(
+                    "Unable to load station or charger data."
+                );
+            }
+
+
+            stations =
+                await stationsResponse.json();
+
+            chargers =
+                await chargersResponse.json();
+
+
+            populateStationSelectors();
+
+            renderChargers();
+
+
+        } catch (error) {
+
+            chargerList.innerHTML =
+                `<div class="empty">
+                    Unable to load charger information.
+                </div>`;
+
+            showMessage(
+                error.message ||
+                "Unable to connect to the server.",
+                "error"
+            );
+        }
+    }
+
+
+    function populateStationSelectors() {
+
+        stationSelect.innerHTML =
+            '<option value="">Select station</option>';
+
+        stationFilter.innerHTML =
+            '<option value="">All Stations</option>';
+
+
+        if (!Array.isArray(stations)) {
+            return;
+        }
+
+
+        stations.forEach(station => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                station.id;
+
+            option.textContent =
+                station.name ||
+                `Station #${station.id}`;
+
+            stationSelect.appendChild(
+                option
+            );
+
+
+            const filterOption =
+                document.createElement("option");
+
+            filterOption.value =
+                station.id;
+
+            filterOption.textContent =
+                station.name ||
+                `Station #${station.id}`;
+
+            stationFilter.appendChild(
+                filterOption
+            );
+        });
+    }
+
+
+    function renderChargers() {
+
+        const selectedStation =
+            stationFilter.value;
+
+
+        let filteredChargers =
+            Array.isArray(chargers)
+                ? chargers
+                : [];
+
+
+        if (selectedStation) {
+
+            filteredChargers =
+                filteredChargers.filter(
+                    charger =>
+                        charger.station &&
+                        String(
+                            charger.station.id
+                        ) === String(
+                            selectedStation
+                        )
+                );
+        }
+
+
+        if (filteredChargers.length === 0) {
+
+            chargerList.innerHTML =
+                `<div class="empty">
+                    No chargers found.
+                </div>`;
+
+            return;
+        }
+
+
+        chargerList.innerHTML = "";
+
+
+        filteredChargers.forEach(
+            charger => {
+
+                const status =
+                    String(
+                        charger.status ||
+                        "UNKNOWN"
+                    ).toUpperCase();
+
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+                card.className =
+                    "charger-card";
+
+
+                card.innerHTML = `
+
+                    <div class="charger-header">
+
+                        <div class="charger-name">
+                            Charger #${charger.id}
+                        </div>
+
+                        <div class="
+                            status-badge
+                            ${getStatusClass(status)}
+                        ">
+                            ${escapeHtml(status)}
+                        </div>
+
+                    </div>
+
+
+                    <div class="charger-details">
+
+                        <div class="detail">
+
+                            <div class="detail-label">
+                                Station
+                            </div>
+
+                            <div class="detail-value">
+                                ${
+                                    charger.station
+                                        ? escapeHtml(
+                                            charger.station.name ||
+                                            `Station #${charger.station.id}`
+                                        )
+                                        : "Not assigned"
+                                }
+                            </div>
+
+                        </div>
+
+
+                        <div class="detail">
+
+                            <div class="detail-label">
+                                Charger Type
+                            </div>
+
+                            <div class="detail-value">
+                                ${escapeHtml(
+                                    charger.chargerType ||
+                                    "Not specified"
+                                )}
+                            </div>
+
+                        </div>
+
+
+                        <div class="detail">
+
+                            <div class="detail-label">
+                                Connector
+                            </div>
+
+                            <div class="detail-value">
+                                ${escapeHtml(
+                                    charger.connectorType ||
+                                    "Not specified"
+                                )}
+                            </div>
+
+                        </div>
+
+
+                        <div class="detail">
+
+                            <div class="detail-label">
+                                Power
+                            </div>
+
+                            <div class="detail-value">
+                                ${
+                                    charger.powerKw != null
+                                        ? charger.powerKw + " kW"
+                                        : "-"
+                                }
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="charger-actions">
+
+                        <button
+                            class="
+                                action-btn
+                                available-btn
+                            "
+                            onclick="
+                                updateChargerStatus(
+                                    ${charger.id},
+                                    'AVAILABLE'
+                                )
+                            "
+                        >
+                            Available
+                        </button>
+
+
+                        <button
+                            class="
+                                action-btn
+                                unavailable-btn
+                            "
+                            onclick="
+                                updateChargerStatus(
+                                    ${charger.id},
+                                    'UNAVAILABLE'
+                                )
+                            "
+                        >
+                            Unavailable
+                        </button>
+
+
+                        <button
+                            class="
+                                action-btn
+                                maintenance-btn
+                            "
+                            onclick="
+                                updateChargerStatus(
+                                    ${charger.id},
+                                    'MAINTENANCE'
+                                )
+                            "
+                        >
+                            Maintenance
+                        </button>
+
+
+                        <button
+                            class="
+                                action-btn
+                                delete-btn
+                            "
+                            onclick="
+                                deleteCharger(
+                                    ${charger.id}
+                                )
+                            "
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+                `;
+
+
+                chargerList.appendChild(
+                    card
+                );
+            }
+        );
+    }
+
+
+    async function updateChargerStatus(
+        chargerId,
+        status
+    ) {
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/chargers/${chargerId}/status?status=${encodeURIComponent(status)}`,
+                    {
+                        method: "PUT"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+                throw new Error(
+                    errorText ||
+                    "Unable to update charger status."
+                );
+            }
+
+
+            showMessage(
+                `Charger marked ${status}.`,
+                "success"
+            );
+
+
+            loadPageData();
+
+
+        } catch (error) {
+
+            showMessage(
+                error.message ||
+                "Unable to update charger status.",
+                "error"
+            );
+        }
+    }
+
+
+    async function deleteCharger(
+        chargerId
+    ) {
+
+        const confirmed =
+            confirm(
+                "Are you sure you want to delete this charger?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/chargers/${chargerId}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+                throw new Error(
+                    errorText ||
+                    "Unable to delete charger."
+                );
+            }
+
+
+            showMessage(
+                "Charger deleted successfully.",
+                "success"
+            );
+
+
+            loadPageData();
+
+
+        } catch (error) {
+
+            showMessage(
+                error.message ||
+                "Unable to delete charger.",
+                "error"
+            );
+        }
+    }
+
+
+    function getStatusClass(status) {
+
+        switch (status) {
+
+            case "AVAILABLE":
+                return "status-available";
+
+            case "OCCUPIED":
+                return "status-occupied";
+
+            case "UNAVAILABLE":
+                return "status-unavailable";
+
+            case "MAINTENANCE":
+                return "status-maintenance";
+
+            default:
+                return "status-unavailable";
+        }
+    }
+
+
+    function showMessage(
+        text,
+        type
+    ) {
+
+        message.textContent =
+            text;
+
+        message.className =
+            "message " + type;
+
+
+        setTimeout(
+            () => {
+                message.className =
+                    "message";
+            },
+            4000
+        );
+    }
+
+
+    function escapeHtml(
+        value
+    ) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+        div.textContent =
+            value ?? "";
+
+        return div.innerHTML;
+    }
+
+</script>
+
+</body>
+</html>
