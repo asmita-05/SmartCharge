@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCharge - Book Charging</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e88e5;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            color: #64748b;
+        }
+
+        .card {
+            background: white;
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #1e88e5;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .battery-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .vehicle-info {
+            display: none;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 10px;
+            color: #1e40af;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .booking-details[hidden],
+        #chargerGroup[hidden] { display: none; }
+
+        .emergency-box {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-row input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .checkbox-row label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .emergency-reason {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: #1e88e5;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            background: #1565c0;
+        }
+
+        .submit-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .message {
+            display: none;
+            padding: 13px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        .success {
+            display: block;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            display: block;
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .note {
+            margin-top: 18px;
+            padding: 14px;
+            background: #f8fafc;
+            border-radius: 8px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, .62);
+        }
+        .modal-backdrop.open { display: flex; }
+        .success-modal {
+            width: min(620px, 100%);
+            padding: 38px;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 25px 80px rgba(15, 23, 42, .3);
+            text-align: center;
+        }
+        .success-icon { font-size: 54px; margin-bottom: 12px; }
+        .success-modal h2 { font-size: 30px; margin-bottom: 10px; color: #166534; }
+        .success-modal p { color: #475569; line-height: 1.6; margin-bottom: 24px; }
+        .modal-actions { display: flex; gap: 12px; }
+        .modal-actions button { flex: 1; padding: 14px; border: 0; border-radius: 9px; font-weight: 700; font-size: 15px; cursor: pointer; }
+        .show-request-btn { background: #1e88e5; color: white; }
+        .dismiss-modal-btn { background: #e2e8f0; color: #334155; }
+        @media (max-width: 520px) { .success-modal { padding: 28px 22px; } .modal-actions { flex-direction: column; } }
+
+        @media (max-width: 600px) {
+            .navbar {
+                padding: 14px 18px;
+            }
+
+            .container {
+                margin-top: 20px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .battery-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="brand">⚡ SmartCharge</div>
+    <a href="dashboard.html" class="back-btn">← Dashboard</a>
+</nav>
+
+<main class="container">
+
+    <div class="header">
+        <h1>Book Charging</h1>
+        <p>Create a charging request for your electric vehicle.</p>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <section class="card">
+
+        <form id="bookingForm">
+
+            <div class="form-group">
+                <label for="station">Select Charging Station</label>
+                <select id="station" required>
+                    <option value="">Loading stations...</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="chargerGroup" hidden>
+                <label for="charger">Select Charger</label>
+                <select id="charger" required disabled>
+                    <option value="">Select a station first</option>
+                </select>
+            </div>
+
+            <div class="booking-details" id="bookingDetails" hidden>
+
+            <div class="form-group">
+                <label for="vehicle">
+                    Select Vehicle
+                </label>
+
+                <select id="vehicle" required>
+                    <option value="">Loading vehicles...</option>
+                </select>
+
+                <div id="vehicleInfo" class="vehicle-info"></div>
+            </div>
+
+            <div class="battery-row">
+
+                <div class="form-group">
+                    <label for="currentBattery">
+                        Current Battery (%)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="currentBattery"
+                        min="0"
+                        max="100"
+                        step="1"
+                        placeholder="e.g. 25"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="targetBattery">
+                        Target Battery (%)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="targetBattery"
+                        min="1"
+                        max="100"
+                        step="1"
+                        placeholder="e.g. 80"
+                        required
+                    >
+                </div>
+
+            </div>
+
+            <div class="emergency-box">
+
+                <div class="checkbox-row">
+                    <input
+                        type="checkbox"
+                        id="emergencyRequested"
+                    >
+
+                    <label for="emergencyRequested">
+                        Request emergency consideration
+                    </label>
+                </div>
+
+                <div
+                    id="emergencyReasonBox"
+                    class="emergency-reason"
+                >
+                    <label for="emergencyReason">
+                        Reason for emergency request
+                    </label>
+
+                    <textarea
+                        id="emergencyReason"
+                        placeholder="Explain why emergency consideration is required."
+                    ></textarea>
+                </div>
+
+            </div>
+
+            </div>
+
+            <button
+                type="submit"
+                class="submit-btn"
+                id="submitButton"
+                disabled
+            >
+                Submit Charging Request
+            </button>
+
+        </form>
+
+        <div class="note">
+            <strong>Note:</strong>
+            Charging duration will be calculated using your vehicle's
+            battery capacity and the allocated charger's power.
+            The scheduler will determine the order in which pending
+            requests are processed.
+        </div>
+
+    </section>
+
+</main>
+
+<div class="modal-backdrop" id="createdModal" role="dialog" aria-modal="true" aria-labelledby="createdTitle">
+    <div class="success-modal">
+        <div class="success-icon">✅</div>
+        <h2 id="createdTitle">Charging request created</h2>
+        <p id="createdSummary"></p>
+        <div class="modal-actions">
+            <button type="button" class="show-request-btn" id="showRequestButton">Show request</button>
+            <button type="button" class="dismiss-modal-btn" id="dismissCreatedModal">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+
+    const storedUser = localStorage.getItem("smartchargeUser");
+
+    if (!storedUser) {
+        window.location.href = "login.html";
+    }
+
+    let user;
+
+    try {
+        user = JSON.parse(storedUser);
+    } catch (error) {
+        localStorage.removeItem("smartchargeUser");
+        window.location.href = "login.html";
+    }
+
+    let vehicles = [];
+    let chargers = [];
+    let chargerLoadToken = 0;
+
+    const vehicleSelect =
+        document.getElementById("vehicle");
+
+    const stationSelect = document.getElementById("station");
+    const chargerSelect = document.getElementById("charger");
+    const chargerGroup = document.getElementById("chargerGroup");
+    const bookingDetails = document.getElementById("bookingDetails");
+    const createdModal = document.getElementById("createdModal");
+
+    const vehicleInfo =
+        document.getElementById("vehicleInfo");
+
+    const emergencyCheckbox =
+        document.getElementById("emergencyRequested");
+
+    const emergencyReasonBox =
+        document.getElementById("emergencyReasonBox");
+
+    const emergencyReason =
+        document.getElementById("emergencyReason");
+
+    const bookingForm =
+        document.getElementById("bookingForm");
+
+    const submitButton =
+        document.getElementById("submitButton");
+
+    const message =
+        document.getElementById("message");
+
+
+    loadVehicles();
+    loadStations();
+
+    stationSelect.addEventListener("change", loadChargers);
+    chargerSelect.addEventListener("change", function () {
+        const hasCharger = Boolean(chargerSelect.value);
+        bookingDetails.hidden = !hasCharger;
+        submitButton.disabled = !hasCharger;
+    });
+
+    document.getElementById("showRequestButton").addEventListener("click", function () {
+        const requestId = createdModal.dataset.requestId;
+        window.location.href = `status.html?requestId=${encodeURIComponent(requestId)}`;
+    });
+
+    document.getElementById("dismissCreatedModal").addEventListener("click", function () {
+        createdModal.classList.remove("open");
+        bookingForm.reset();
+        vehicleInfo.style.display = "none";
+        emergencyReasonBox.style.display = "none";
+        chargerGroup.hidden = true;
+        chargerSelect.disabled = true;
+        chargerSelect.innerHTML = '<option value="">Select a station first</option>';
+        bookingDetails.hidden = true;
+        submitButton.disabled = true;
+    });
+
+
+    vehicleSelect.addEventListener("change", function () {
+
+        const selectedVehicle = vehicles.find(
+            vehicle => vehicle.id == vehicleSelect.value
+        );
+
+        if (!selectedVehicle) {
+            vehicleInfo.style.display = "none";
+            return;
+        }
+
+        vehicleInfo.innerHTML = `
+            <strong>${escapeHtml(selectedVehicle.model || "Vehicle")}</strong><br>
+            Registration:
+            ${escapeHtml(selectedVehicle.registrationNumber)}<br>
+            Battery Capacity:
+            ${selectedVehicle.batteryCapacity} kWh
+        `;
+
+        vehicleInfo.style.display = "block";
+    });
+
+
+    emergencyCheckbox.addEventListener("change", function () {
+
+        if (emergencyCheckbox.checked) {
+            emergencyReasonBox.style.display = "block";
+            emergencyReason.required = true;
+        } else {
+            emergencyReasonBox.style.display = "none";
+            emergencyReason.required = false;
+            emergencyReason.value = "";
+        }
+    });
+
+
+    bookingForm.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const vehicleId =
+            Number(vehicleSelect.value);
+
+        const currentBattery =
+            Number(
+                document.getElementById("currentBattery").value
+            );
+
+        const targetBattery =
+            Number(
+                document.getElementById("targetBattery").value
+            );
+
+        const stationId = Number(stationSelect.value);
+        const chargerId = Number(chargerSelect.value);
+        const selectedCharger = chargers.find(charger => charger.id === chargerId);
+        const selectedStationName = stationSelect.selectedOptions[0]?.textContent || "selected station";
+
+        const isEmergency =
+            emergencyCheckbox.checked;
+
+        const reason =
+            emergencyReason.value.trim();
+
+
+        if (!vehicleId) {
+            showMessage(
+                "Please select a vehicle.",
+                "error"
+            );
+            return;
+        }
+
+        if (
+            currentBattery < 0 ||
+            currentBattery > 100
+        ) {
+            showMessage(
+                "Current battery must be between 0 and 100%.",
+                "error"
+            );
+            return;
+        }
+
+        if (
+            targetBattery < 0 ||
+            targetBattery > 100
+        ) {
+            showMessage(
+                "Target battery must be between 0 and 100%.",
+                "error"
+            );
+            return;
+        }
+
+        if (targetBattery <= currentBattery) {
+            showMessage(
+                "Target battery must be greater than current battery.",
+                "error"
+            );
+            return;
+        }
+
+        if (!stationId || !chargerId || !selectedCharger) {
+            showMessage("Select a station and one of its chargers.", "error");
+            return;
+        }
+
+        if (isEmergency && !reason) {
+            showMessage(
+                "Please provide a reason for the emergency request.",
+                "error"
+            );
+            return;
+        }
+
+
+        const requestData = {
+            user: {
+                id: user.id
+            },
+
+            vehicle: {
+                id: vehicleId
+            },
+
+            station: { id: stationId },
+            requestedCharger: { id: chargerId },
+
+            currentBattery: currentBattery,
+            targetBattery: targetBattery,
+
+            requiredConnectorType: selectedCharger.connectorType,
+
+            emergencyRequested: isEmergency,
+            emergencyReason: isEmergency ? reason : null
+        };
+
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Submitting...";
+
+
+        try {
+
+            const response = await fetch(
+                `${API_BASE_URL}/charging/requests`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(requestData)
+                }
+            );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+                throw new Error(
+                    errorText ||
+                    "Unable to create charging request."
+                );
+            }
+
+
+            const request =
+                await response.json();
+
+
+            createdModal.dataset.requestId = request.id;
+            document.getElementById("createdSummary").textContent =
+                `Request #${request.id} was created for ${selectedStationName} · ${selectedCharger.chargerType} (${selectedCharger.connectorType}). ` +
+                (isEmergency ? "It is waiting for Admin priority review." : "It is in the automatic scheduler queue.");
+            createdModal.classList.add("open");
+
+
+        } catch (error) {
+
+            showMessage(
+                error.message ||
+                "Unable to connect to the server.",
+                "error"
+            );
+
+        } finally {
+
+            submitButton.disabled = false;
+            submitButton.textContent =
+                "Submit Charging Request";
+        }
+    });
+
+
+    async function loadVehicles() {
+
+        try {
+
+            const response = await fetch(
+                `${API_BASE_URL}/vehicles/user/${user.id}`
+            );
+
+
+            if (!response.ok) {
+                throw new Error(
+                    "Unable to load your vehicles."
+                );
+            }
+
+
+            vehicles = await response.json();
+
+
+            vehicleSelect.innerHTML =
+                '<option value="">Select your vehicle</option>';
+
+
+            if (
+                !Array.isArray(vehicles) ||
+                vehicles.length === 0
+            ) {
+
+                vehicleSelect.innerHTML =
+                    '<option value="">No vehicles registered</option>';
+
+                showMessage(
+                    "Please add a vehicle before creating a charging request.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            vehicles.forEach(vehicle => {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = vehicle.id;
+
+                option.textContent =
+                    `${vehicle.model || "Vehicle"} - ${vehicle.registrationNumber}`;
+
+                vehicleSelect.appendChild(option);
+            });
+
+
+        } catch (error) {
+
+            vehicleSelect.innerHTML =
+                '<option value="">Unable to load vehicles</option>';
+
+            showMessage(
+                error.message ||
+                "Unable to connect to the server.",
+                "error"
+            );
+        }
+    }
+
+    async function loadStations() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/stations`);
+            if (!response.ok) throw new Error("Unable to load charging stations.");
+            const stations = await response.json();
+            stationSelect.innerHTML = '<option value="">Select a charging station</option>';
+            stations.forEach(station => {
+                const option = document.createElement("option");
+                option.value = station.id;
+                option.textContent = `${station.name}${station.location ? ` — ${station.location}` : ""}`;
+                stationSelect.appendChild(option);
+            });
+            if (!stations.length) showMessage("No charging stations are configured yet.", "error");
+        } catch (error) {
+            stationSelect.innerHTML = '<option value="">Unable to load stations</option>';
+            showMessage(error.message || "Unable to connect to the server.", "error");
+        }
+    }
+
+    async function loadChargers() {
+        const loadToken = ++chargerLoadToken;
+        const stationId = Number(stationSelect.value);
+        bookingDetails.hidden = true;
+        submitButton.disabled = true;
+        chargerGroup.hidden = !stationId;
+        chargerSelect.disabled = true;
+        chargerSelect.innerHTML = '<option value="">Loading chargers...</option>';
+        chargers = [];
+        if (!stationId) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/chargers/station/${stationId}`);
+            if (!response.ok) throw new Error("Unable to load chargers for this station.");
+            const stationChargers = await response.json();
+            if (loadToken !== chargerLoadToken) return;
+            chargers = Array.isArray(stationChargers) ? stationChargers : [];
+            chargerSelect.innerHTML = '<option value="">Select a charger</option>';
+            chargers.forEach(charger => {
+                const option = document.createElement("option");
+                option.value = charger.id;
+                const status = String(charger.status || "UNKNOWN").toUpperCase();
+                option.textContent = `${charger.chargerType} · ${charger.connectorType} · ${charger.powerKw} kW · ${status}`;
+                option.disabled = !["AVAILABLE", "OCCUPIED"].includes(status);
+                chargerSelect.appendChild(option);
+            });
+            const hasSelectableCharger = chargers.some(charger =>
+                ["AVAILABLE", "OCCUPIED"].includes(String(charger.status || "").toUpperCase()));
+            chargerSelect.disabled = !hasSelectableCharger;
+            if (!chargers.length) chargerSelect.innerHTML = '<option value="">No chargers at this station</option>';
+            else if (!hasSelectableCharger) chargerSelect.insertAdjacentHTML("afterbegin", '<option value="">No available chargers at this station</option>');
+        } catch (error) {
+            if (loadToken !== chargerLoadToken) return;
+            chargerSelect.innerHTML = '<option value="">Unable to load chargers</option>';
+            showMessage(error.message || "Unable to connect to the server.", "error");
+        }
+    }
+
+
+    function showMessage(text, type) {
+
+        message.textContent = text;
+        message.className =
+            "message " + type;
+
+        setTimeout(() => {
+            message.className = "message";
+        }, 5000);
+    }
+
+
+    function escapeHtml(value) {
+
+        const div =
+            document.createElement("div");
+
+        div.textContent = value;
+
+        return div.innerHTML;
+    }
+</script>
+
+</body>
+</html>

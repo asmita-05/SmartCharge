@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCharge - Charging Status</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e88e5;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            color: #64748b;
+        }
+
+        .history-link { color: #1e88e5; font-weight: 600; display: none; margin: 0 0 18px; text-decoration: none; }
+
+        .message {
+            display: none;
+            padding: 13px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success {
+            display: block;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            display: block;
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .request-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .request-card {
+            background: white;
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .request-id {
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-allocated {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-completed {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .status-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .detail {
+            background: #f8fafc;
+            padding: 13px;
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .emergency {
+            margin-top: 15px;
+            padding: 13px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .session {
+            margin-top: 18px;
+            padding: 16px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+        }
+
+        .session h3 {
+            margin-bottom: 12px;
+            font-size: 16px;
+            color: #1e40af;
+        }
+
+        .session-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .session-detail {
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .session-detail span {
+            color: #64748b;
+        }
+
+        .session-auto-complete {
+            margin-top: 12px;
+            color: #166534;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .cancel-btn {
+            border: none;
+            background: #ef4444;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 7px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .cancel-btn:hover {
+            background: #dc2626;
+        }
+
+
+        .refresh-btn {
+            border: none;
+            background: #1e88e5;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 7px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            background: #1565c0;
+        }
+
+        .empty,
+        .loading {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .loading {
+            color: #1e88e5;
+        }
+
+        @media (max-width: 800px) {
+            .details,
+            .session-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 550px) {
+            .navbar {
+                padding: 14px 18px;
+            }
+
+            .container {
+                margin-top: 20px;
+            }
+
+            .request-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .details,
+            .session-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="brand">⚡ SmartCharge</div>
+    <a href="dashboard.html" class="back-btn">← Dashboard</a>
+</nav>
+
+<main class="container">
+
+    <div class="header">
+        <h1 id="pageTitle">Charging Status</h1>
+        <p id="pageSubtitle">Track your charging requests and sessions.</p>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <button class="refresh-btn" onclick="loadData()">
+        ↻ Refresh Status
+    </button>
+    <a class="history-link" id="historyLink" href="status.html">← Show all charging history</a>
+
+    <div id="requestList" class="request-list">
+        <div class="loading">
+            Loading charging requests...
+        </div>
+    </div>
+
+</main>
+
+<script>
+    const API_BASE_URL = ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+    const focusedRequestId = new URLSearchParams(window.location.search).get("requestId");
+    if (focusedRequestId) {
+        localStorage.setItem("smartchargeFocusedRequestId", focusedRequestId);
+        document.getElementById("pageTitle").textContent = `Charging Request #${focusedRequestId}`;
+        document.getElementById("pageSubtitle").textContent = "Details and live status for this request.";
+        document.getElementById("historyLink").style.display = "inline-block";
+    }
+
+    const storedUser =
+        localStorage.getItem("smartchargeUser");
+
+    if (!storedUser) {
+        window.location.href = "login.html";
+    }
+
+    let user;
+
+    try {
+        user = JSON.parse(storedUser);
+    } catch (error) {
+        localStorage.removeItem("smartchargeUser");
+        window.location.href = "login.html";
+    }
+
+    const requestList =
+        document.getElementById("requestList");
+
+    const message =
+        document.getElementById("message");
+
+    let vehicles = [];
+    let sessions = [];
+
+    loadData();
+
+    async function loadData() {
+
+        requestList.innerHTML =
+            '<div class="loading">Loading charging requests...</div>';
+
+        try {
+
+            const [
+                requestsResponse,
+                vehiclesResponse,
+                sessionsResponse
+            ] = await Promise.all([
+
+                fetch(
+                    `${API_BASE_URL}/charging/requests/user/${user.id}`
+                ),
+
+                fetch(
+                    `${API_BASE_URL}/vehicles/user/${user.id}`
+                ),
+
+                fetch(
+                    `${API_BASE_URL}/charging/sessions/user/${user.id}`
+                )
+            ]);
+
+
+            if (
+                !requestsResponse.ok ||
+                !vehiclesResponse.ok ||
+                !sessionsResponse.ok
+            ) {
+                throw new Error(
+                    "Unable to load charging information."
+                );
+            }
+
+
+            const requests =
+                await requestsResponse.json();
+
+            vehicles =
+                await vehiclesResponse.json();
+
+            sessions =
+                await sessionsResponse.json();
+
+
+            const visibleRequests = focusedRequestId
+                ? requests.filter(request => String(request.id) === String(focusedRequestId))
+                : requests;
+            renderRequests(visibleRequests);
+
+
+        } catch (error) {
+
+            requestList.innerHTML =
+                `<div class="empty">
+                    Unable to load charging information.
+                </div>`;
+
+            showMessage(
+                error.message ||
+                "Unable to connect to the server.",
+                "error"
+            );
+        }
+    }
+
+
+    function renderRequests(requests) {
+
+        if (
+            !Array.isArray(requests) ||
+            requests.length === 0
+        ) {
+
+            requestList.innerHTML =
+                `<div class="empty">
+                    <h3>No Charging Requests</h3>
+                    <p style="margin-top:8px;">
+                        ${focusedRequestId ? "This request could not be found." : "You have not created any charging requests yet."}
+                    </p>
+                </div>`;
+
+            return;
+        }
+
+
+        requestList.innerHTML = "";
+
+
+        const sortedRequests =
+            [...requests].sort(
+                (a, b) => b.id - a.id
+            );
+
+
+        sortedRequests.forEach(request => {
+
+            const vehicle =
+                vehicles.find(
+                    v => v.id === request.vehicle?.id
+                );
+
+
+            const session = sessions
+                .filter(s => s.request?.id === request.id)
+                .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))[0];
+
+
+            const card =
+                document.createElement("div");
+
+            card.className = "request-card";
+
+
+            const status =
+                (request.status || "UNKNOWN").toUpperCase();
+
+
+            const statusClass =
+                getStatusClass(status);
+
+
+            const estimatedMinutes =
+                request.estimatedMinutes != null
+                    ? `${Math.round(request.estimatedMinutes)} min`
+                    : "Waiting for charger";
+
+
+            let actionHtml = "";
+
+
+            if (status === "PENDING") {
+
+                actionHtml = `
+                    <div class="actions">
+                        <button
+                            class="cancel-btn"
+                            onclick="cancelRequest(${request.id})"
+                        >
+                            Cancel Request
+                        </button>
+                    </div>
+                `;
+            }
+
+
+            let emergencyHtml = "";
+
+
+            if (request.emergencyRequested) {
+
+                emergencyHtml = `
+                    <div class="emergency">
+                        <strong>Emergency Request:</strong>
+                        ${escapeHtml(
+                            request.emergencyStatus || "PENDING"
+                        )}
+
+                        ${
+                            request.emergencyReason
+                                ? `<br>
+                                   <strong>Reason:</strong>
+                                   ${escapeHtml(
+                                       request.emergencyReason
+                                   )}`
+                                : ""
+                        }
+                    </div>
+                `;
+            }
+
+
+            let sessionHtml = "";
+
+
+            if (session) {
+
+                sessionHtml = `
+                    <div class="session">
+
+                        <h3>⚡ Charging Session</h3>
+
+                        <div class="session-details">
+
+                            <div class="session-detail">
+                                <span>Session ID</span><br>
+                                <strong>#${session.id}</strong>
+                            </div>
+
+                            <div class="session-detail">
+                                <span>Session Status</span><br>
+                                <strong>
+                                    ${escapeHtml(
+                                        session.status || "UNKNOWN"
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div class="session-detail">
+                                <span>Charger</span><br>
+                                <strong>
+                                    ${
+                                        session.charger?.id
+                                            ? `Charger #${session.charger.id}`
+                                            : "Assigned"
+                                    }
+                                </strong>
+                            </div>
+
+                            <div class="session-detail">
+                                <span>Start Time</span><br>
+                                <strong>
+                                    ${formatDate(session.startTime)}
+                                </strong>
+                            </div>
+
+                            <div class="session-detail">
+                                <span>End Time</span><br>
+                                <strong>
+                                    ${session.endTime
+                                        ? formatDate(session.endTime)
+                                        : "In progress"}
+                                </strong>
+                            </div>
+
+                            <div class="session-detail">
+                                <span>Energy Used</span><br>
+                                <strong>
+                                    ${
+                                        session.energyUsed != null
+                                            ? session.energyUsed + " kWh"
+                                            : "Not recorded"
+                                    }
+                                </strong>
+                            </div>
+
+                        </div>
+
+                        ${String(session.status).toUpperCase() === "ACTIVE"
+                            ? `<p class="session-auto-complete">Charging completes automatically at the estimated finish time.</p>`
+                            : ""}
+
+                    </div>
+                `;
+            }
+
+
+            card.innerHTML = `
+
+                <div class="request-header">
+
+                    <div class="request-id">
+                        Request #${request.id}
+                    </div>
+
+                    <div class="status-badge ${statusClass}">
+                        ${escapeHtml(status)}
+                    </div>
+
+                </div>
+
+
+                <div class="details">
+
+                    <div class="detail">
+                        <div class="detail-label">
+                            Vehicle
+                        </div>
+
+                        <div class="detail-value">
+                            ${
+                                vehicle
+                                    ? escapeHtml(
+                                        vehicle.model ||
+                                        vehicle.registrationNumber
+                                    )
+                                    : "Vehicle #" +
+                                      (request.vehicle?.id || "-")
+                            }
+                        </div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Charging Station</div>
+                        <div class="detail-value">
+                            ${escapeHtml(request.station?.name || "Station not specified")}
+                            ${request.station?.location ? `<br><span>${escapeHtml(request.station.location)}</span>` : ""}
+                        </div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Selected Charger</div>
+                        <div class="detail-value">
+                            ${escapeHtml(request.requestedCharger?.chargerType || "Assigned by scheduler")}
+                            ${request.requestedCharger?.connectorType ? ` · ${escapeHtml(request.requestedCharger.connectorType)}` : ""}
+                        </div>
+                    </div>
+
+
+                    <div class="detail">
+                        <div class="detail-label">
+                            Battery
+                        </div>
+
+                        <div class="detail-value">
+                            ${request.currentBattery}% →
+                            ${request.targetBattery}%
+                        </div>
+                    </div>
+
+
+                    <div class="detail">
+                        <div class="detail-label">
+                            Connector
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                request.requiredConnectorType ||
+                                "Any"
+                            )}
+                        </div>
+                    </div>
+
+
+                    <div class="detail">
+                        <div class="detail-label">
+                            Estimated Charging Time
+                        </div>
+
+                        <div class="detail-value">
+                            ${estimatedMinutes}
+                        </div>
+                    </div>
+
+
+                    <div class="detail">
+                        <div class="detail-label">
+                            Priority
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                request.priority || "NORMAL"
+                            )}
+                        </div>
+                    </div>
+
+
+                    <div class="detail">
+                        <div class="detail-label">
+                            Arrival Time
+                        </div>
+
+                        <div class="detail-value">
+                            ${formatDate(request.arrivalTime)}
+                        </div>
+                    </div>
+
+                </div>
+
+
+                ${emergencyHtml}
+
+                ${sessionHtml}
+
+                ${actionHtml}
+            `;
+
+
+            requestList.appendChild(card);
+        });
+    }
+
+
+    async function cancelRequest(requestId) {
+
+        const confirmed =
+            confirm(
+                "Are you sure you want to cancel this charging request?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/charging/requests/${requestId}/cancel`,
+                    {
+                        method: "PUT"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+                throw new Error(
+                    errorText ||
+                    "Unable to cancel request."
+                );
+            }
+
+
+            showMessage(
+                "Charging request cancelled successfully.",
+                "success"
+            );
+
+
+            loadData();
+
+
+        } catch (error) {
+
+            showMessage(
+                error.message ||
+                "Unable to cancel request.",
+                "error"
+            );
+        }
+    }
+
+
+    function getStatusClass(status) {
+
+        switch (status) {
+
+            case "PENDING":
+                return "status-pending";
+
+            case "ALLOCATED":
+                return "status-allocated";
+
+            case "ACTIVE":
+                return "status-active";
+
+            case "COMPLETED":
+                return "status-completed";
+
+            case "CANCELLED":
+                return "status-cancelled";
+
+            case "FAILED":
+                return "status-failed";
+
+            default:
+                return "status-pending";
+        }
+    }
+
+
+    function formatDate(value) {
+
+        if (!value) {
+            return "-";
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+
+
+        return date.toLocaleString();
+    }
+
+
+    function showMessage(text, type) {
+
+        message.textContent = text;
+
+        message.className =
+            "message " + type;
+
+
+        setTimeout(() => {
+
+            message.className =
+                "message";
+
+        }, 4000);
+    }
+
+
+    function escapeHtml(value) {
+
+        const div =
+            document.createElement("div");
+
+        div.textContent =
+            value ?? "";
+
+        return div.innerHTML;
+    }
+</script>
+
+</body>
+</html>
