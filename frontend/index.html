@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SmartCharge - EV Charging Management</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(
+                135deg,
+                #f5f3ff,
+                #eef2ff
+            );
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: white;
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 70px auto;
+            padding: 0 25px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 44px;
+            margin-bottom: 15px;
+            color: #1e293b;
+        }
+
+        .hero h1 span {
+            color: #7c3aed;
+        }
+
+        .hero p {
+            max-width: 700px;
+            margin: 0 auto 45px;
+            color: #64748b;
+            line-height: 1.7;
+            font-size: 17px;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
+            text-align: left;
+        }
+
+        .portal-card {
+            background: white;
+            padding: 28px;
+            border-radius: 14px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.07);
+            transition: transform 0.2s ease,
+                        box-shadow 0.2s ease;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 9px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .icon {
+            font-size: 38px;
+            margin-bottom: 18px;
+        }
+
+        .portal-card h2 {
+            margin-bottom: 10px;
+        }
+
+        .portal-card p {
+            color: #64748b;
+            line-height: 1.6;
+            font-size: 14px;
+            min-height: 68px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 11px 18px;
+            border-radius: 8px;
+            background: #7c3aed;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background: #6d28d9;
+        }
+
+        .footer {
+            margin-top: 55px;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        @media (max-width: 800px) {
+            .portal-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 34px;
+            }
+
+            .navbar {
+                padding: 16px 20px;
+            }
+
+            .subtitle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+
+    <div class="brand">
+        ⚡ SmartCharge
+    </div>
+
+    <div class="subtitle">
+        Intelligent EV Charging Management
+    </div>
+
+</nav>
+
+
+<main class="container">
+
+    <section class="hero">
+
+        <h1>
+            Welcome to <span>SmartCharge</span>
+        </h1>
+
+        <p>
+            An intelligent EV charging station resource management
+            and scheduling system using FCFS, Priority Scheduling
+            and Shortest Job First algorithms.
+        </p>
+
+    </section>
+
+
+    <section class="portal-grid">
+
+        <div class="portal-card">
+
+            <div class="icon">
+                🚗
+            </div>
+
+            <h2>
+                User Portal
+            </h2>
+
+            <p>
+                Register your vehicle, submit charging requests,
+                check queue status and manage your charging sessions.
+            </p>
+
+            <a
+                href="user/login.html"
+                class="btn"
+            >
+                User Login
+            </a>
+
+        </div>
+
+
+        <div class="portal-card">
+
+            <div class="icon">
+                ⚙️
+            </div>
+
+            <h2>
+                Station Operator
+            </h2>
+
+            <p>
+                Manage charging stations and chargers, configure
+                charger status and monitor charging infrastructure.
+            </p>
+
+            <a
+                href="operator/login.html"
+                class="btn"
+            >
+                Operator Login
+            </a>
+
+        </div>
+
+
+        <div class="portal-card">
+
+            <div class="icon">
+                🛡️
+            </div>
+
+            <h2>
+                Admin Portal
+            </h2>
+
+            <p>
+                Manage charging requests, review emergency requests
+                and control the active scheduling algorithm.
+            </p>
+
+            <a
+                href="admin/login.html"
+                class="btn"
+            >
+                Admin Login
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <div class="footer">
+
+        SmartCharge — Intelligent EV Charging Station
+        Resource Management and Scheduling System
+
+    </div>
+
+</main>
+
+</body>
+</html>

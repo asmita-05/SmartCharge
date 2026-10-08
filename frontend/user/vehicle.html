@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCharge - My Vehicles</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e88e5;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .page-header {
+            margin-bottom: 25px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .page-header p {
+            color: #64748b;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #1e88e5;
+        }
+
+        .primary-btn,
+        .cancel-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .primary-btn {
+            width: 100%;
+            background: #1e88e5;
+            color: white;
+        }
+
+        .primary-btn:hover {
+            background: #1565c0;
+        }
+
+        .cancel-btn {
+            display: none;
+            width: 100%;
+            margin-top: 10px;
+            background: #64748b;
+            color: white;
+        }
+
+        .vehicle-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .vehicle-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .vehicle-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .vehicle-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .vehicle-number {
+            color: #1e88e5;
+            font-weight: 600;
+        }
+
+        .vehicle-details {
+            color: #64748b;
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .vehicle-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .edit-btn,
+        .delete-btn {
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .edit-btn {
+            background: #f59e0b;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+        }
+
+        .message {
+            display: none;
+            padding: 12px;
+            margin-bottom: 18px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .success {
+            display: block;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            display: block;
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .empty {
+            text-align: center;
+            color: #64748b;
+            padding: 30px 10px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #1e88e5;
+            padding: 30px 10px;
+        }
+
+        @media (max-width: 800px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="brand">⚡ SmartCharge</div>
+    <a href="dashboard.html" class="back-btn">← Dashboard</a>
+</nav>
+
+<main class="container">
+
+    <div class="page-header">
+        <h1>My Vehicles</h1>
+        <p>Add and manage the vehicles you use for charging.</p>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <div class="content">
+
+        <!-- Add / Edit Vehicle -->
+        <section class="card">
+            <h2 id="formTitle">Add Vehicle</h2>
+
+            <form id="vehicleForm">
+
+                <div class="form-group">
+                    <label for="registrationNumber">
+                        Registration Number
+                    </label>
+
+                    <input
+                        type="text"
+                        id="registrationNumber"
+                        placeholder="e.g. UK07AB1234"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="model">Vehicle Model</label>
+
+                    <input
+                        type="text"
+                        id="model"
+                        placeholder="e.g. Tata Nexon EV"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="vehicleType">Vehicle Type</label>
+
+                    <select id="vehicleType" required>
+                        <option value="">Select vehicle type</option>
+                        <option value="CAR">Car</option>
+                        <option value="BIKE">Bike</option>
+                        <option value="SUV">SUV</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="batteryCapacity">
+                        Battery Capacity (kWh)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="batteryCapacity"
+                        min="0.1"
+                        step="0.1"
+                        placeholder="e.g. 40.5"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="primary-btn" id="saveButton">
+                    Add Vehicle
+                </button>
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelButton"
+                    onclick="cancelEdit()"
+                >
+                    Cancel Edit
+                </button>
+
+            </form>
+        </section>
+
+        <!-- Vehicle List -->
+        <section class="card">
+            <h2>Registered Vehicles</h2>
+
+            <div id="vehicleList" class="vehicle-list">
+                <div class="loading">
+                    Loading vehicles...
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+</main>
+
+<script>
+    const API_BASE_URL = ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+
+    const storedUser = localStorage.getItem("smartchargeUser");
+
+    if (!storedUser) {
+        window.location.href = "login.html";
+    }
+
+    let user;
+
+    try {
+        user = JSON.parse(storedUser);
+    } catch (error) {
+        localStorage.removeItem("smartchargeUser");
+        window.location.href = "login.html";
+    }
+
+    let editingVehicleId = null;
+
+    const vehicleForm = document.getElementById("vehicleForm");
+    const vehicleList = document.getElementById("vehicleList");
+    const message = document.getElementById("message");
+
+    loadVehicles();
+
+    vehicleForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const vehicleData = {
+            registrationNumber:
+                document.getElementById("registrationNumber").value.trim(),
+
+            model:
+                document.getElementById("model").value.trim(),
+
+            vehicleType:
+                document.getElementById("vehicleType").value,
+
+            batteryCapacity:
+                Number(document.getElementById("batteryCapacity").value)
+        };
+
+        if (vehicleData.batteryCapacity <= 0) {
+            showMessage(
+                "Battery capacity must be greater than zero.",
+                "error"
+            );
+            return;
+        }
+
+        try {
+            let response;
+
+            if (editingVehicleId === null) {
+
+                response = await fetch(
+                    `${API_BASE_URL}/vehicles/user/${user.id}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(vehicleData)
+                    }
+                );
+
+            } else {
+
+                response = await fetch(
+                    `${API_BASE_URL}/vehicles/${editingVehicleId}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(vehicleData)
+                    }
+                );
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(
+                    errorText || "Unable to save vehicle."
+                );
+            }
+
+            showMessage(
+                editingVehicleId === null
+                    ? "Vehicle added successfully."
+                    : "Vehicle updated successfully.",
+                "success"
+            );
+
+            resetForm();
+            loadVehicles();
+
+        } catch (error) {
+            showMessage(
+                error.message || "Unable to connect to the server.",
+                "error"
+            );
+        }
+    });
+
+    async function loadVehicles() {
+
+        vehicleList.innerHTML =
+            '<div class="loading">Loading vehicles...</div>';
+
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/vehicles/user/${user.id}`
+            );
+
+            if (!response.ok) {
+                throw new Error("Unable to load vehicles.");
+            }
+
+            const vehicles = await response.json();
+
+            if (!Array.isArray(vehicles) || vehicles.length === 0) {
+                vehicleList.innerHTML =
+                    '<div class="empty">No vehicles registered yet.</div>';
+                return;
+            }
+
+            vehicleList.innerHTML = "";
+
+            vehicles.forEach(vehicle => {
+                const card = document.createElement("div");
+                card.className = "vehicle-card";
+
+                card.innerHTML = `
+                    <div class="vehicle-top">
+                        <div class="vehicle-name">
+                            ${escapeHtml(vehicle.model || "Unnamed Vehicle")}
+                        </div>
+
+                        <div class="vehicle-number">
+                            ${escapeHtml(vehicle.registrationNumber)}
+                        </div>
+                    </div>
+
+                    <div class="vehicle-details">
+                        <div>
+                            <strong>Type:</strong>
+                            ${escapeHtml(vehicle.vehicleType || "Not specified")}
+                        </div>
+
+                        <div>
+                            <strong>Battery:</strong>
+                            ${vehicle.batteryCapacity} kWh
+                        </div>
+                    </div>
+
+                    <div class="vehicle-actions">
+                        <button
+                            class="edit-btn"
+                            onclick="editVehicle(${vehicle.id})"
+                        >
+                            Edit
+                        </button>
+
+                        <button
+                            class="delete-btn"
+                            onclick="deleteVehicle(${vehicle.id})"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                `;
+
+                vehicleList.appendChild(card);
+            });
+
+        } catch (error) {
+
+            vehicleList.innerHTML =
+                '<div class="empty">Unable to load vehicles.</div>';
+
+            showMessage(
+                error.message || "Unable to connect to the server.",
+                "error"
+            );
+        }
+    }
+
+    async function editVehicle(id) {
+
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/vehicles/${id}`
+            );
+
+            if (!response.ok) {
+                throw new Error("Unable to load vehicle.");
+            }
+
+            const vehicle = await response.json();
+
+            editingVehicleId = vehicle.id;
+
+            document.getElementById("registrationNumber").value =
+                vehicle.registrationNumber || "";
+
+            document.getElementById("model").value =
+                vehicle.model || "";
+
+            document.getElementById("vehicleType").value =
+                vehicle.vehicleType || "";
+
+            document.getElementById("batteryCapacity").value =
+                vehicle.batteryCapacity || "";
+
+            document.getElementById("formTitle").textContent =
+                "Edit Vehicle";
+
+            document.getElementById("saveButton").textContent =
+                "Update Vehicle";
+
+            document.getElementById("cancelButton").style.display =
+                "block";
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+        } catch (error) {
+            showMessage(
+                error.message || "Unable to load vehicle.",
+                "error"
+            );
+        }
+    }
+
+    async function deleteVehicle(id) {
+
+        const confirmed = confirm(
+            "Are you sure you want to delete this vehicle?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/vehicles/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+
+                throw new Error(
+                    errorText || "Unable to delete vehicle."
+                );
+            }
+
+            showMessage(
+                "Vehicle deleted successfully.",
+                "success"
+            );
+
+            loadVehicles();
+
+        } catch (error) {
+            showMessage(
+                error.message || "Unable to delete vehicle.",
+                "error"
+            );
+        }
+    }
+
+    function cancelEdit() {
+        resetForm();
+    }
+
+    function resetForm() {
+
+        editingVehicleId = null;
+
+        vehicleForm.reset();
+
+        document.getElementById("formTitle").textContent =
+            "Add Vehicle";
+
+        document.getElementById("saveButton").textContent =
+            "Add Vehicle";
+
+        document.getElementById("cancelButton").style.display =
+            "none";
+    }
+
+    function showMessage(text, type) {
+
+        message.textContent = text;
+        message.className = "message " + type;
+
+        setTimeout(() => {
+            message.className = "message";
+        }, 3500);
+    }
+
+    function escapeHtml(value) {
+
+        const div = document.createElement("div");
+        div.textContent = value;
+
+        return div.innerHTML;
+    }
+</script>
+
+</body>
+</html>
