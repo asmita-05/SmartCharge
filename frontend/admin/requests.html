@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCharge - Charging Requests</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #475569;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .nav-links a:hover {
+            background: #f1f5f9;
+        }
+
+        .logout-btn {
+            border: none;
+            padding: 9px 16px;
+            border-radius: 7px;
+            background: #ef4444;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .refresh-btn {
+            border: none;
+            padding: 11px 18px;
+            border-radius: 7px;
+            background: #7c3aed;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .refresh-btn:hover {
+            background: #6d28d9;
+        }
+
+        .filters {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filters select {
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            min-width: 180px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        th,
+        td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 13px;
+        }
+
+        tr:hover td {
+            background: #fafafa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .allocated {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .completed {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .cancelled,
+        .failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .emergency {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .normal {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .process-btn {
+            border: none;
+            padding: 7px 11px;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .process-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .process-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .empty {
+            padding: 40px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 15px;
+            border-radius: 7px;
+            display: none;
+        }
+
+        .success {
+            display: block;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            display: block;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        @media (max-width: 800px) {
+            .navbar {
+                padding: 14px 18px;
+            }
+
+            .nav-links a {
+                display: none;
+            }
+
+            .header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+
+    <div class="brand">
+        ⚡ SmartCharge Admin
+    </div>
+
+    <div class="nav-links">
+
+        <a href="dashboard.html">
+            Dashboard
+        </a>
+
+        <a href="requests.html">
+            Requests
+        </a>
+
+        <a href="emergencies.html">
+            Emergencies
+        </a>
+
+        <a href="analytics.html">
+            Analytics
+        </a>
+
+        <button
+            class="logout-btn"
+            onclick="logout()"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</nav>
+
+
+<main class="container">
+
+    <div class="header">
+
+        <div>
+            <h1>
+                Charging Requests
+            </h1>
+
+            <p>
+                Monitor and process charging requests.
+            </p>
+        </div>
+
+        <button
+            class="refresh-btn"
+            onclick="loadRequests()"
+        >
+            Refresh
+        </button>
+
+    </div>
+
+
+    <div
+        id="message"
+        class="message"
+    ></div>
+
+
+    <div class="filters">
+
+        <select
+            id="statusFilter"
+            onchange="applyFilters()"
+        >
+
+            <option value="ALL">
+                All Statuses
+            </option>
+
+            <option value="PENDING">
+                Pending
+            </option>
+
+            <option value="ALLOCATED">
+                Allocated
+            </option>
+
+            <option value="ACTIVE">
+                Active
+            </option>
+
+            <option value="COMPLETED">
+                Completed
+            </option>
+
+            <option value="CANCELLED">
+                Cancelled
+            </option>
+
+            <option value="FAILED">
+                Failed
+            </option>
+
+        </select>
+
+
+        <select
+            id="priorityFilter"
+            onchange="applyFilters()"
+        >
+
+            <option value="ALL">
+                All Priorities
+            </option>
+
+            <option value="HIGH">
+                High
+            </option>
+
+            <option value="NORMAL">
+                Normal
+            </option>
+
+            <option value="LOW">
+                Low
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        ID
+                    </th>
+
+                    <th>
+                        User
+                    </th>
+
+                    <th>
+                        Vehicle
+                    </th>
+
+                    <th>
+                        Battery
+                    </th>
+
+                    <th>
+                        Connector
+                    </th>
+
+                    <th>
+                        Estimated Time
+                    </th>
+
+                    <th>
+                        Priority
+                    </th>
+
+                    <th>
+                        Emergency
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Arrival
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="requestTable">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</main>
+
+
+<script>
+
+    const API_BASE_URL =
+        ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+
+
+    const storedAdmin =
+        localStorage.getItem(
+            "smartchargeAdmin"
+        );
+
+
+    if (!storedAdmin) {
+
+        window.location.href =
+            "login.html";
+    }
+
+
+    let allRequests = [];
+
+
+    loadRequests();
+
+
+    async function loadRequests() {
+
+        hideMessage();
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/charging/requests`
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load charging requests."
+                );
+            }
+
+
+            const requests =
+                await response.json();
+
+
+            allRequests =
+                Array.isArray(requests)
+                    ? requests
+                    : [];
+
+
+            applyFilters();
+
+
+        } catch (error) {
+
+            showMessage(
+                error.message ||
+                "Unable to load charging requests.",
+                "error"
+            );
+        }
+    }
+
+
+    function applyFilters() {
+
+        const status =
+            document.getElementById(
+                "statusFilter"
+            ).value;
+
+
+        const priority =
+            document.getElementById(
+                "priorityFilter"
+            ).value;
+
+
+        let filtered =
+            allRequests.filter(request => {
+
+                const statusMatches =
+                    status === "ALL" ||
+                    String(request.status)
+                        .toUpperCase() === status;
+
+
+                const priorityMatches =
+                    priority === "ALL" ||
+                    String(request.priority)
+                        .toUpperCase() === priority;
+
+
+                return (
+                    statusMatches &&
+                    priorityMatches
+                );
+            });
+
+
+        renderRequests(filtered);
+    }
+
+
+    function renderRequests(requests) {
+
+        const table =
+            document.getElementById(
+                "requestTable"
+            );
+
+
+        table.innerHTML = "";
+
+
+        if (!requests.length) {
+
+            table.innerHTML = `
+                <tr>
+                    <td
+                        colspan="11"
+                        class="empty"
+                    >
+                        No charging requests found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        requests.forEach(request => {
+
+            const row =
+                document.createElement("tr");
+
+
+            const currentBattery =
+                request.currentBattery ??
+                "-";
+
+
+            const targetBattery =
+                request.targetBattery ??
+                "-";
+
+
+            const estimatedMinutes =
+                request.estimatedMinutes;
+
+
+            const estimatedTime =
+                estimatedMinutes != null
+                    ? `${Number(estimatedMinutes).toFixed(0)} min`
+                    : "Not calculated";
+
+
+            const status =
+                String(
+                    request.status || "-"
+                ).toUpperCase();
+
+
+            const priority =
+                String(
+                    request.priority || "NORMAL"
+                ).toUpperCase();
+
+
+            const emergency =
+                request.emergencyRequested === true
+                    ? `<span class="badge emergency">YES</span>`
+                    : `<span class="badge normal">NO</span>`;
+
+
+            const processButton = status !== "PENDING"
+                ? "-"
+                : (request.emergencyRequested === true
+                    ? (String(request.emergencyStatus).toUpperCase() === "APPROVED"
+                        ? `<span class="badge emergency">PRIORITY APPROVED · AUTO SCHEDULING</span>`
+                        : String(request.emergencyStatus).toUpperCase() === "DECLINED"
+                            ? `<span class="badge normal">PRIORITY DECLINED · AUTO QUEUED</span>`
+                            : `<span class="badge emergency">PRIORITY · ADMIN REVIEW</span>`)
+                    : `<span class="badge normal">AUTO QUEUED</span>`);
+
+
+            row.innerHTML = `
+
+                <td>
+                    ${escapeHtml(request.id)}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        request.user?.name ||
+                        request.user?.email ||
+                        request.userId ||
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        request.vehicle?.registrationNumber ||
+                        request.vehicleId ||
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(currentBattery)}%
+                    →
+                    ${escapeHtml(targetBattery)}%
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        request.requiredConnectorType ||
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${estimatedTime}
+                </td>
+
+                <td>
+                    <span class="badge ${getPriorityClass(priority)}">
+                        ${escapeHtml(priority)}
+                    </span>
+                </td>
+
+                <td>
+                    ${emergency}
+                </td>
+
+                <td>
+                    <span class="badge ${getStatusClass(status)}">
+                        ${escapeHtml(status)}
+                    </span>
+                </td>
+
+                <td>
+                    ${formatDate(request.arrivalTime)}
+                </td>
+
+                <td>
+                    ${processButton}
+                </td>
+            `;
+
+
+            table.appendChild(row);
+
+        });
+    }
+
+
+
+    function getStatusClass(status) {
+
+        switch (status) {
+
+            case "PENDING":
+                return "pending";
+
+            case "ALLOCATED":
+                return "allocated";
+
+            case "ACTIVE":
+                return "active";
+
+            case "COMPLETED":
+                return "completed";
+
+            case "CANCELLED":
+            case "FAILED":
+                return "cancelled";
+
+            default:
+                return "normal";
+        }
+    }
+
+
+    function getPriorityClass(priority) {
+
+        if (priority === "HIGH") {
+            return "emergency";
+        }
+
+        if (priority === "LOW") {
+            return "normal";
+        }
+
+        return "normal";
+    }
+
+
+    function formatDate(value) {
+
+        if (!value) {
+            return "-";
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (Number.isNaN(date.getTime())) {
+            return escapeHtml(value);
+        }
+
+
+        return date.toLocaleString();
+    }
+
+
+    function escapeHtml(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+            return "";
+        }
+
+
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+
+    function showMessage(
+        message,
+        type
+    ) {
+
+        const element =
+            document.getElementById(
+                "message"
+            );
+
+
+        element.textContent =
+            message;
+
+
+        element.className =
+            `message ${type}`;
+    }
+
+
+    function hideMessage() {
+
+        const element =
+            document.getElementById(
+                "message"
+            );
+
+
+        element.textContent = "";
+
+        element.className =
+            "message";
+    }
+
+
+    function logout() {
+
+        localStorage.removeItem(
+            "smartchargeAdmin"
+        );
+
+        window.location.href =
+            "login.html";
+    }
+
+</script>
+
+<script src="admin-alerts.js"></script>
+</body>
+</html>

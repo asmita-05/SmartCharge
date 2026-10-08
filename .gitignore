@@ -1,0 +1,46 @@
+# Maven
+target/
+**/target/
+*.class
+
+# Java build artifacts
+*.jar
+*.war
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# Local application configuration
+application-local.properties
+
+# Node
+node_modules/
+
+# Frontend build output
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp

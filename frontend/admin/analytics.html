@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SmartCharge - Analytics</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #475569;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .nav-links a:hover {
+            background: #f1f5f9;
+        }
+
+        .logout-btn {
+            border: none;
+            padding: 9px 16px;
+            border-radius: 7px;
+            background: #ef4444;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 7px;
+        }
+
+        .header p {
+            color: #64748b;
+        }
+
+        .notice {
+            background: white;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+
+        .notice h2 {
+            margin-bottom: 10px;
+        }
+
+        .notice p {
+            color: #64748b;
+            line-height: 1.6;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        .planned {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+
+        .metric {
+            background: white;
+            padding: 22px;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .metric h3 {
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .metric p {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 11px 18px;
+            border-radius: 7px;
+            background: #7c3aed;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            background: #6d28d9;
+        }
+
+        @media (max-width: 850px) {
+            .planned {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-links a {
+                display: none;
+            }
+        }
+
+        @media (max-width: 550px) {
+            .planned {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                padding: 14px 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+
+    <div class="brand">
+        ⚡ SmartCharge Admin
+    </div>
+
+    <div class="nav-links">
+
+        <a href="dashboard.html">
+            Dashboard
+        </a>
+
+        <a href="requests.html">
+            Requests
+        </a>
+
+        <a href="emergencies.html">
+            Emergencies
+        </a>
+
+        <a href="analytics.html">
+            Analytics
+        </a>
+
+        <button
+            class="logout-btn"
+            onclick="logout()"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</nav>
+
+
+<main class="container">
+
+    <section class="header">
+
+        <h1>
+            Analytics
+        </h1>
+
+        <p>
+            SmartCharge scheduling and operational analytics.
+        </p>
+
+    </section>
+
+
+    <section class="notice">
+
+        <div class="icon">
+            📊
+        </div>
+
+        <h2>
+            Analytics Module — Planned
+        </h2>
+
+        <p>
+            Detailed analytics will be implemented in a later
+            phase of SmartCharge. The current Phase 2 focuses on
+            user requests, charger management, scheduling,
+            emergency handling and concurrent resource allocation.
+        </p>
+
+        <a
+            href="dashboard.html"
+            class="back-btn"
+        >
+            Back to Dashboard
+        </a>
+
+    </section>
+
+
+    <section class="planned">
+
+        <div class="metric">
+
+            <h3>
+                Waiting Time
+            </h3>
+
+            <p>
+                Average time between request arrival and charger allocation.
+            </p>
+
+        </div>
+
+
+        <div class="metric">
+
+            <h3>
+                Turnaround Time
+            </h3>
+
+            <p>
+                Time between request arrival and charging completion.
+            </p>
+
+        </div>
+
+
+        <div class="metric">
+
+            <h3>
+                Throughput
+            </h3>
+
+            <p>
+                Number of completed charging requests over a defined period.
+            </p>
+
+        </div>
+
+
+        <div class="metric">
+
+            <h3>
+                Charger Utilization
+            </h3>
+
+            <p>
+                Percentage of operating time during which chargers are occupied.
+            </p>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script>
+
+    const storedAdmin =
+        localStorage.getItem(
+            "smartchargeAdmin"
+        );
+
+
+    if (!storedAdmin) {
+
+        window.location.href =
+            "login.html";
+    }
+
+
+    function logout() {
+
+        localStorage.removeItem(
+            "smartchargeAdmin"
+        );
+
+        window.location.href =
+            "login.html";
+    }
+
+</script>
+
+<script src="admin-alerts.js"></script>
+</body>
+</html>
