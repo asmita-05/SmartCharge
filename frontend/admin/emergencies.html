@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCharge - Emergency Requests</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #475569;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .nav-links a:hover {
+            background: #f1f5f9;
+        }
+
+        .logout-btn {
+            border: none;
+            padding: 9px 16px;
+            border-radius: 7px;
+            background: #ef4444;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #64748b;
+            margin-top: 6px;
+        }
+
+        .refresh-btn {
+            border: none;
+            padding: 11px 18px;
+            border-radius: 7px;
+            background: #7c3aed;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .refresh-btn:hover {
+            background: #6d28d9;
+        }
+
+        .message {
+            display: none;
+            padding: 12px 15px;
+            border-radius: 7px;
+            margin-bottom: 18px;
+        }
+
+        .message.success {
+            display: block;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .message.error {
+            display: block;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .empty {
+            background: white;
+            padding: 45px;
+            border-radius: 10px;
+            text-align: center;
+            color: #64748b;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .emergency-list {
+            display: grid;
+            gap: 18px;
+        }
+
+        .emergency-card {
+            background: white;
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+            border-left: 5px solid #ef4444;
+        }
+
+        .emergency-card.focus-emergency {
+            outline: 4px solid #7c3aed;
+            box-shadow: 0 8px 28px rgba(124, 58, 237, .25);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .request-id {
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .emergency {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .detail {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 7px;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .reason {
+            margin-bottom: 18px;
+            padding: 14px;
+            background: #fff7ed;
+            border-radius: 8px;
+            border: 1px solid #fed7aa;
+        }
+
+        .reason-label {
+            font-size: 12px;
+            color: #9a3412;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .reason-text {
+            color: #7c2d12;
+            line-height: 1.5;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .approve-btn,
+        .decline-btn {
+            border: none;
+            padding: 10px 17px;
+            border-radius: 7px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .approve-btn {
+            background: #16a34a;
+        }
+
+        .approve-btn:hover {
+            background: #15803d;
+        }
+
+        .decline-btn {
+            background: #dc2626;
+        }
+
+        .decline-btn:hover {
+            background: #b91c1c;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 850px) {
+            .details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-links a {
+                display: none;
+            }
+        }
+
+        @media (max-width: 550px) {
+            .details {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .approve-btn,
+            .decline-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+
+    <div class="brand">
+        ⚡ SmartCharge Admin
+    </div>
+
+    <div class="nav-links">
+
+        <a href="dashboard.html">
+            Dashboard
+        </a>
+
+        <a href="requests.html">
+            Requests
+        </a>
+
+        <a href="emergencies.html">
+            Emergencies
+        </a>
+
+        <a href="analytics.html">
+            Analytics
+        </a>
+
+        <button
+            class="logout-btn"
+            onclick="logout()"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</nav>
+
+
+<main class="container">
+
+    <div class="header">
+
+        <div>
+            <h1>
+                Emergency Requests
+            </h1>
+
+            <p>
+                Review emergency charging requests submitted by users.
+            </p>
+        </div>
+
+        <button
+            class="refresh-btn"
+            onclick="loadEmergencies()"
+        >
+            Refresh
+        </button>
+
+    </div>
+
+
+    <div
+        id="message"
+        class="message"
+    ></div>
+
+
+    <div
+        id="emergencyList"
+        class="emergency-list"
+    ></div>
+
+</main>
+
+
+<script>
+
+    const API_BASE_URL =
+        ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+
+    const focusedEmergencyId = new URLSearchParams(window.location.search).get("requestId");
+
+
+    const storedAdmin =
+        localStorage.getItem(
+            "smartchargeAdmin"
+        );
+
+
+    if (!storedAdmin) {
+
+        window.location.href =
+            "login.html";
+    }
+
+
+    loadEmergencies();
+
+
+    async function loadEmergencies() {
+
+        hideMessage();
+
+
+        const container =
+            document.getElementById(
+                "emergencyList"
+            );
+
+
+        container.innerHTML = `
+            <div class="empty">
+                Loading emergency requests...
+            </div>
+        `;
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/admin/emergencies/pending`
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+                throw new Error(
+                    errorText ||
+                    "Unable to load emergency requests."
+                );
+            }
+
+
+            const emergencies =
+                await response.json();
+
+
+            renderEmergencies(
+                Array.isArray(emergencies)
+                    ? emergencies
+                    : []
+            );
+
+
+        } catch (error) {
+
+            container.innerHTML = `
+                <div class="empty">
+                    Unable to load emergency requests.
+                </div>
+            `;
+
+
+            showMessage(
+                error.message ||
+                "Unable to load emergency requests.",
+                "error"
+            );
+        }
+    }
+
+
+    function renderEmergencies(
+        emergencies
+    ) {
+
+        const container =
+            document.getElementById(
+                "emergencyList"
+            );
+
+
+        container.innerHTML = "";
+
+
+        if (!emergencies.length) {
+
+            container.innerHTML = `
+                <div class="empty">
+                    <h3>No Pending Emergencies</h3>
+                    <p style="margin-top: 8px;">
+                        There are currently no emergency requests waiting for review.
+                    </p>
+                </div>
+            `;
+
+            return;
+        }
+
+
+        emergencies.forEach(request => {
+
+            const card =
+                document.createElement("div");
+
+
+            card.className =
+                "emergency-card";
+            card.id = `emergency-${request.id}`;
+            if (String(request.id) === String(focusedEmergencyId)) card.classList.add("focus-emergency");
+
+
+            const userName =
+                request.user?.name ||
+                request.user?.email ||
+                request.userId ||
+                "-";
+
+
+            const vehicle =
+                request.vehicle?.registrationNumber ||
+                request.vehicle?.model ||
+                request.vehicleId ||
+                "-";
+
+
+            const currentBattery =
+                request.currentBattery ??
+                "-";
+
+
+            const targetBattery =
+                request.targetBattery ??
+                "-";
+
+
+            const connector =
+                request.requiredConnectorType ||
+                "-";
+
+            const stationName = request.station?.name || "-";
+            const chargerName = request.requestedCharger?.chargerType || "-";
+
+
+            const reason =
+                request.emergencyReason ||
+                "No reason provided.";
+
+
+            card.innerHTML = `
+
+                <div class="card-header">
+
+                    <div class="request-id">
+                        Request #${escapeHtml(request.id)}
+                    </div>
+
+                    <span class="badge pending">
+                        PENDING REVIEW
+                    </span>
+
+                </div>
+
+
+                <div class="details">
+
+                    <div class="detail">
+
+                        <div class="detail-label">
+                            User
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(userName)}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail">
+
+                        <div class="detail-label">
+                            Vehicle
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(vehicle)}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail">
+
+                        <div class="detail-label">
+                            Battery
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(currentBattery)}%
+                            →
+                            ${escapeHtml(targetBattery)}%
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail">
+
+                        <div class="detail-label">
+                            Connector
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(connector)}
+                        </div>
+
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Station</div>
+                        <div class="detail-value">${escapeHtml(stationName)}</div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Selected Charger</div>
+                        <div class="detail-value">${escapeHtml(chargerName)}</div>
+                    </div>
+
+
+                    <div class="detail">
+
+                        <div class="detail-label">
+                            Arrival Time
+                        </div>
+
+                        <div class="detail-value">
+                            ${formatDate(request.arrivalTime)}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail">
+
+                        <div class="detail-label">
+                            Request Status
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                String(
+                                    request.status || "-"
+                                ).toUpperCase()
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail">
+
+                        <div class="detail-label">
+                            Emergency Status
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                String(
+                                    request.emergencyStatus || "PENDING"
+                                ).toUpperCase()
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail">
+
+                        <div class="detail-label">
+                            Priority
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                String(
+                                    request.priority || "NORMAL"
+                                ).toUpperCase()
+                            )}
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="reason">
+
+                    <div class="reason-label">
+                        EMERGENCY REASON
+                    </div>
+
+                    <div class="reason-text">
+                        ${escapeHtml(reason)}
+                    </div>
+
+                </div>
+
+
+                <div class="actions">
+
+                    <button
+                        class="approve-btn"
+                        onclick="approveEmergency(${request.id})"
+                    >
+                        Approve Emergency
+                    </button>
+
+                    <button
+                        class="decline-btn"
+                        onclick="declineEmergency(${request.id})"
+                    >
+                        Decline Emergency
+                    </button>
+
+                </div>
+            `;
+
+
+            container.appendChild(card);
+
+        });
+
+        if (focusedEmergencyId) {
+            window.setTimeout(() => document.getElementById(`emergency-${focusedEmergencyId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+        }
+    }
+
+
+    async function approveEmergency(
+        requestId
+    ) {
+
+        const confirmed =
+            confirm(
+                `Approve emergency request #${requestId}?`
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        await updateEmergency(
+            requestId,
+            "approve"
+        );
+    }
+
+
+    async function declineEmergency(
+        requestId
+    ) {
+
+        const confirmed =
+            confirm(
+                `Decline emergency request #${requestId}?`
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        await updateEmergency(
+            requestId,
+            "decline"
+        );
+    }
+
+
+    async function updateEmergency(
+        requestId,
+        action
+    ) {
+
+        hideMessage();
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/admin/emergencies/${requestId}/${action}`,
+                    {
+                        method: "PUT"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+                throw new Error(
+                    errorText ||
+                    `Unable to ${action} emergency request.`
+                );
+            }
+
+
+            showMessage(
+                action === "approve"
+                    ? `Emergency request #${requestId} approved.`
+                    : `Emergency request #${requestId} declined.`,
+                "success"
+            );
+
+
+            await loadEmergencies();
+
+
+        } catch (error) {
+
+            showMessage(
+                error.message ||
+                "Unable to update emergency request.",
+                "error"
+            );
+        }
+    }
+
+
+    function formatDate(value) {
+
+        if (!value) {
+            return "-";
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (Number.isNaN(date.getTime())) {
+            return escapeHtml(value);
+        }
+
+
+        return date.toLocaleString();
+    }
+
+
+    function escapeHtml(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+            return "";
+        }
+
+
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+
+    function showMessage(
+        message,
+        type
+    ) {
+
+        const element =
+            document.getElementById(
+                "message"
+            );
+
+
+        element.textContent =
+            message;
+
+
+        element.className =
+            `message ${type}`;
+    }
+
+
+    function hideMessage() {
+
+        const element =
+            document.getElementById(
+                "message"
+            );
+
+
+        element.textContent = "";
+
+        element.className =
+            "message";
+    }
+
+
+    function logout() {
+
+        localStorage.removeItem(
+            "smartchargeAdmin"
+        );
+
+        window.location.href =
+            "login.html";
+    }
+
+</script>
+
+<script src="admin-alerts.js"></script>
+</body>
+</html>

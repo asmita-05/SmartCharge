@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCharge - Admin Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+
+        .admin-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-name {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            border: none;
+            padding: 9px 16px;
+            border-radius: 7px;
+            background: #ef4444;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .welcome {
+            margin-bottom: 25px;
+        }
+
+        .welcome h1 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .welcome p {
+            color: #64748b;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-title {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .card-value {
+            font-size: 27px;
+            font-weight: bold;
+        }
+
+        .purple {
+            color: #7c3aed;
+        }
+
+        .blue {
+            color: #2563eb;
+        }
+
+        .green {
+            color: #16a34a;
+        }
+
+        .orange {
+            color: #d97706;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .action-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .action-card h2 {
+            font-size: 19px;
+            margin-bottom: 8px;
+        }
+
+        .action-card p {
+            color: #64748b;
+            line-height: 1.5;
+            margin-bottom: 18px;
+            min-height: 45px;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 11px 17px;
+            border-radius: 8px;
+            background: #7c3aed;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .action-btn:hover {
+            background: #6d28d9;
+        }
+
+        .section {
+            margin-top: 25px;
+            background: white;
+            padding: 23px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .section h2 {
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .scheduler-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .scheduler-box select {
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            min-width: 180px;
+            font-size: 14px;
+        }
+
+        .scheduler-btn {
+            border: none;
+            padding: 11px 17px;
+            border-radius: 7px;
+            background: #7c3aed;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .scheduler-btn:hover {
+            background: #6d28d9;
+        }
+
+        .scheduler-status {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .error {
+            color: #dc2626;
+        }
+
+        @media (max-width: 950px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .actions {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .cards,
+            .actions {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-name {
+                display: none;
+            }
+
+            .navbar {
+                padding: 14px 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+
+    <div class="brand">
+        ⚡ SmartCharge Admin
+    </div>
+
+    <div class="admin-area">
+
+        <span
+            class="admin-name"
+            id="adminName"
+        >
+            Administrator
+        </span>
+
+        <button
+            class="logout-btn"
+            onclick="logout()"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</nav>
+
+
+<main class="container">
+
+    <section class="welcome">
+
+        <h1>
+            Admin Dashboard
+        </h1>
+
+        <p>
+            Manage charging operations, emergencies and scheduling.
+        </p>
+
+    </section>
+
+
+    <section class="cards">
+
+        <div class="card">
+
+            <div class="card-title">
+                Total Stations
+            </div>
+
+            <div
+                class="card-value purple"
+                id="stationCount"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Total Chargers
+            </div>
+
+            <div
+                class="card-value blue"
+                id="chargerCount"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Pending Requests
+            </div>
+
+            <div
+                class="card-value orange"
+                id="pendingCount"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                Emergency Requests
+            </div>
+
+            <div
+                class="card-value green"
+                id="emergencyCount"
+            >
+                -
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="actions">
+
+        <div class="action-card">
+
+            <h2>
+                📋 Charging Requests
+            </h2>
+
+            <p>
+                View pending and processed charging requests.
+            </p>
+
+            <a
+                href="requests.html"
+                class="action-btn"
+            >
+                View Requests
+            </a>
+
+        </div>
+
+
+        <div class="action-card">
+
+            <h2>
+                🚨 Emergencies
+            </h2>
+
+            <p>
+                Review and approve or decline emergency requests.
+            </p>
+
+            <a
+                href="emergencies.html"
+                class="action-btn"
+            >
+                Manage Emergencies
+            </a>
+
+        </div>
+
+
+        <div class="action-card">
+
+            <h2>
+                📊 Analytics
+            </h2>
+
+            <p>
+                View basic operational and scheduling information.
+            </p>
+
+            <a
+                href="analytics.html"
+                class="action-btn"
+            >
+                View Analytics
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <section class="section">
+
+        <h2>
+            Scheduling Algorithm
+        </h2>
+
+        <div class="scheduler-box">
+
+            <select id="algorithm">
+
+                <option value="FCFS">
+                    FCFS
+                </option>
+
+                <option value="PRIORITY">
+                    Priority Scheduling
+                </option>
+
+                <option value="SJF">
+                    Shortest Job First
+                </option>
+
+            </select>
+
+
+            <button
+                class="scheduler-btn"
+                onclick="updateAlgorithm()"
+            >
+                Apply Algorithm
+            </button>
+
+
+            <span
+                class="scheduler-status"
+                id="schedulerStatus"
+            >
+                Loading current algorithm...
+            </span>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script>
+
+    const API_BASE_URL =
+        ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+
+
+    const storedAdmin =
+        localStorage.getItem(
+            "smartchargeAdmin"
+        );
+
+
+    if (!storedAdmin) {
+
+        window.location.href =
+            "login.html";
+    }
+
+
+    let admin;
+
+
+    try {
+
+        admin =
+            JSON.parse(storedAdmin);
+
+    } catch (error) {
+
+        localStorage.removeItem(
+            "smartchargeAdmin"
+        );
+
+        window.location.href =
+            "login.html";
+    }
+
+
+    if (admin) {
+
+        document.getElementById(
+            "adminName"
+        ).textContent =
+            admin.name || "Administrator";
+
+        loadDashboard();
+
+    }
+
+
+    async function loadDashboard() {
+
+        try {
+
+            const [
+                stationsResponse,
+                chargersResponse,
+                pendingResponse,
+                emergencyResponse,
+                schedulerResponse
+            ] = await Promise.all([
+
+                fetch(
+                    `${API_BASE_URL}/stations`
+                ),
+
+                fetch(
+                    `${API_BASE_URL}/chargers`
+                ),
+
+                fetch(
+                    `${API_BASE_URL}/charging/requests/status/PENDING`
+                ),
+
+                fetch(
+                    `${API_BASE_URL}/admin/emergencies/pending`
+                ),
+
+                fetch(
+                    `${API_BASE_URL}/admin/scheduler`
+                )
+
+            ]);
+
+
+            if (
+                !stationsResponse.ok ||
+                !chargersResponse.ok
+            ) {
+                throw new Error(
+                    "Unable to load dashboard data."
+                );
+            }
+
+
+            const stations =
+                await stationsResponse.json();
+
+            const chargers =
+                await chargersResponse.json();
+
+
+            document.getElementById(
+                "stationCount"
+            ).textContent =
+                Array.isArray(stations)
+                    ? stations.length
+                    : 0;
+
+
+            document.getElementById(
+                "chargerCount"
+            ).textContent =
+                Array.isArray(chargers)
+                    ? chargers.length
+                    : 0;
+
+
+            if (pendingResponse.ok) {
+
+                const pending =
+                    await pendingResponse.json();
+
+                document.getElementById(
+                    "pendingCount"
+                ).textContent =
+                    Array.isArray(pending)
+                        ? pending.length
+                        : 0;
+            }
+
+
+            if (emergencyResponse.ok) {
+
+                const emergencies =
+                    await emergencyResponse.json();
+
+                document.getElementById(
+                    "emergencyCount"
+                ).textContent =
+                    Array.isArray(emergencies)
+                        ? emergencies.length
+                        : 0;
+            }
+
+
+            if (schedulerResponse.ok) {
+
+                const scheduler =
+                    await schedulerResponse.json();
+
+                const algorithm =
+                    scheduler.algorithm ||
+                    scheduler.currentAlgorithm ||
+                    scheduler;
+
+
+                if (
+                    typeof algorithm === "string"
+                ) {
+
+                    document.getElementById(
+                        "algorithm"
+                    ).value =
+                        algorithm.toUpperCase();
+
+                    document.getElementById(
+                        "schedulerStatus"
+                    ).textContent =
+                        "Current algorithm: " +
+                        algorithm.toUpperCase();
+                }
+            }
+
+
+        } catch (error) {
+
+            document.getElementById(
+                "schedulerStatus"
+            ).textContent =
+                "Unable to load dashboard information.";
+
+            document.getElementById(
+                "schedulerStatus"
+            ).className =
+                "scheduler-status error";
+        }
+    }
+
+
+    async function updateAlgorithm() {
+
+        const algorithm =
+            document.getElementById(
+                "algorithm"
+            ).value;
+
+
+        const status =
+            document.getElementById(
+                "schedulerStatus"
+            );
+
+
+        status.textContent =
+            "Updating scheduler...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/admin/scheduler?algorithm=${encodeURIComponent(algorithm)}`,
+                    {
+                        method: "PUT"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+                throw new Error(
+                    errorText ||
+                    "Unable to update scheduler."
+                );
+            }
+
+
+            status.textContent =
+                "Current algorithm: " +
+                algorithm;
+
+
+            status.className =
+                "scheduler-status";
+
+
+        } catch (error) {
+
+            status.textContent =
+                error.message ||
+                "Unable to update scheduler.";
+
+            status.className =
+                "scheduler-status error";
+        }
+    }
+
+
+    function logout() {
+
+        localStorage.removeItem(
+            "smartchargeAdmin"
+        );
+
+        window.location.href =
+            "login.html";
+    }
+
+</script>
+
+<script src="admin-alerts.js"></script>
+</body>
+</html>
