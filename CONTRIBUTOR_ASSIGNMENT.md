@@ -64,3 +64,6 @@ Shiwani was responsible for the administration and emergency-handling modules, t
 
 Administrative Backend: Shiwani developed "AdminController.java" and "AdminService.java". These components provide the administrative API layer and supporting business logic for administrative operations. They form the backend foundation for exposing system information and performing supported administrative actions.
 
+Emergency Management: She developed "EmergencyController.java" and "EmergencyService.java" to support emergency-related operations. The module provides the backend structure for handling emergency requests and their associated status and decision-making workflow. It works alongside the charging-request and scheduling modules so that emergency-related decisions can influence subsequent request processing.
+
+Demo Data Initialization: Shiwani contributed "DemoDataInitializer.java", which provides application startup data initialization functionality. This supports the preparation of demonstration data for development and project evaluation, depending on the initializer's configured behavior.
