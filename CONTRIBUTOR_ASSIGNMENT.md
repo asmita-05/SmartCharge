@@ -71,3 +71,5 @@ Demo Data Initialization: Shiwani contributed "DemoDataInitializer.java", which 
 Administrative Alerts: She developed "frontend/admin/admin-alerts.js", which provides JavaScript functionality for administrative alerts and related frontend behavior.
 
 Administrative Frontend: Shiwani developed the administrative pages, including "frontend/admin/login.html", "frontend/admin/dashboard.html", "frontend/admin/analytics.html", "frontend/admin/emergencies.html", and "frontend/admin/requests.html". These pages provide the interface for administrative access, dashboard monitoring, analytics, emergency review, and charging-request management.
+
+Monitoring and Oversight: The administrative interface brings together information relevant to the operation of the SmartCharge system. It provides a dedicated area for reviewing requests, observing system-level information, and handling emergency-related workflows. The specific operations available depend on the implemented backend endpoints and their integration with the frontend.
