@@ -79,3 +79,7 @@ Overall, Shiwani's contribution focused on administrative operations, emergency 
 ***Shared Project Structure and Integration***
 
 Although the work was divided into four contribution packages, SmartCharge is designed as one integrated application. Each contributor developed a specific set of modules while preserving the shared directory structure and package naming conventions.
+
+The backend follows a layered Spring Boot architecture, with entity classes representing application data, repositories handling database access, services implementing business logic, and controllers exposing REST APIs. The frontend is organized into user, operator, and administrator interfaces, allowing each type of user to access the relevant functionality.
+
+The modules depend on one another. User and vehicle information is required when creating charging requests. Charging requests interact with the station and charger modules to identify suitable charging resources. The scheduling module processes eligible requests and coordinates charger allocation and charging-session creation. Payment records are associated with charging sessions, while the administration module supports oversight and emergency-related decisions.
