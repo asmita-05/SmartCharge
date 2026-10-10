@@ -91,3 +91,7 @@ The contributions were integrated into the common GitHub repository using separa
 Conclusion
 
 SmartCharge was developed through a modular division of responsibilities among four team members. Asmita established the foundational application configuration, user and vehicle management, and database schema. Akarsh developed station and charger management, payment functionality, and the operator interface. Vanshika implemented the charging-request and charging-session workflow, scheduling algorithms, and charging-related user interfaces. Shiwani developed administration, emergency handling, demo data initialization, and the administrative interface.
+
+Together, these contributions form the intended structure of an EV charging station resource management and scheduling system that demonstrates concepts from Operating Systems and Database Management Systems, including process scheduling, resource allocation, relational data modelling, transactions, concurrency management, and system monitoring.
+
+The final integrated application is intended to provide a unified platform for managing users, vehicles, charging stations, chargers, charging requests, charging sessions, payments, and administrative workflows.
