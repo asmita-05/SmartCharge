@@ -1,3 +1,11 @@
+Individual Contribution Report
+
+Project: SmartCharge – Intelligent EV Charging Station Resource Management and Scheduling System
+
+1. Asmita – User Management, Vehicle Management, Authentication and Database Configuration
+
+
+
 3. Vanshika – Charging Requests, Charging Sessions, Scheduling Algorithms and User Charging Interface
 
 Vanshika was responsible for the charging workflow and scheduling-related modules. Her contribution focused on connecting charging requests with the allocation of charging resources and providing users with interfaces for requesting charging services and monitoring their requests.
