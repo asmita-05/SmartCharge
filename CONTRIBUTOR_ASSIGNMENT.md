@@ -4,6 +4,9 @@ Project: SmartCharge – Intelligent EV Charging Station Resource Management and
 
 1. Asmita – User Management, Vehicle Management, Authentication and Database Configuration
 
+Asmita was responsible for developing the user management and vehicle management modules, along with the initial backend configuration and database structure of the SmartCharge system. Her contribution established the foundation on which the other modules of the application operate.
+
+Backend Development: Asmita developed the main Spring Boot application entry point, "SmartChargeApplication.java", which initializes the backend application. She contributed to the backend Maven configuration through "pom.xml", defining the dependencies required for the application, including Spring Boot Web, Spring Data JPA, PostgreSQL, Spring Security, validation, JWT support, and testing libraries. She also worked on "SecurityConfig.java" to configure the application's security settings.
 
 
 3. Vanshika – Charging Requests, Charging Sessions, Scheduling Algorithms and User Charging Interface
