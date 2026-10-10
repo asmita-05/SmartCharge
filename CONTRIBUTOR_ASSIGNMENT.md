@@ -57,3 +57,7 @@ The scheduling workflow considers charger compatibility and availability before 
 User Charging Interface: Vanshika developed the charging-related user pages, including "frontend/user/booking.html" and "frontend/user/status.html". These pages provide the interface for creating charging requests and viewing their progress or status.
 
 Overall, Vanshika's contribution focused on charging-request processing, charging-session management, the implementation of scheduling policies, and the user interface for booking and tracking charging services.
+
+4. Shiwani – Administration, Emergency Handling, Monitoring and Administrative Interface
+
+Shiwani was responsible for the administration and emergency-handling modules, together with the administrative frontend. Her contribution focused on enabling administrators to monitor the system, review charging-related information, and manage emergency requests through a dedicated interface.
