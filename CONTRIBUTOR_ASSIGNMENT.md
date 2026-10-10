@@ -61,3 +61,6 @@ Overall, Vanshika's contribution focused on charging-request processing, chargin
 4. Shiwani – Administration, Emergency Handling, Monitoring and Administrative Interface
 
 Shiwani was responsible for the administration and emergency-handling modules, together with the administrative frontend. Her contribution focused on enabling administrators to monitor the system, review charging-related information, and manage emergency requests through a dedicated interface.
+
+Administrative Backend: Shiwani developed "AdminController.java" and "AdminService.java". These components provide the administrative API layer and supporting business logic for administrative operations. They form the backend foundation for exposing system information and performing supported administrative actions.
+
