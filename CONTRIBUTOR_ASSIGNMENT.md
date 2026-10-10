@@ -14,6 +14,12 @@ Vehicle Management Module: Asmita developed the vehicle entity and its associate
 
 Database Design and Configuration: She prepared the centralized SQL database schema in "database/schema.sql". The schema defines the principal relational tables for users, vehicles, stations, chargers, charging requests, charging sessions, and payments, along with primary keys, foreign-key relationships, and relevant constraints. This provided the common database structure required by the different modules of the project.
 
+User Interface: Asmita developed the initial user-facing pages, including "frontend/index.html", "frontend/user/login.html", "frontend/user/dashboard.html", and "frontend/user/vehicle.html". These pages provide the starting interface for accessing the application, logging in, viewing the user dashboard, and managing vehicle information.
+
+Execution Support: She also contributed "start-backend.bat", a Windows batch file intended to simplify backend startup.
+
+Overall, Asmita's contribution focused on the application's foundational backend setup, user and vehicle data management, database design, security configuration, and initial user interface.
+
 3. Vanshika – Charging Requests, Charging Sessions, Scheduling Algorithms and User Charging Interface
 
 Vanshika was responsible for the charging workflow and scheduling-related modules. Her contribution focused on connecting charging requests with the allocation of charging resources and providing users with interfaces for requesting charging services and monitoring their requests.
