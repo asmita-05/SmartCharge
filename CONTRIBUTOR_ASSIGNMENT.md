@@ -83,3 +83,11 @@ Although the work was divided into four contribution packages, SmartCharge is de
 The backend follows a layered Spring Boot architecture, with entity classes representing application data, repositories handling database access, services implementing business logic, and controllers exposing REST APIs. The frontend is organized into user, operator, and administrator interfaces, allowing each type of user to access the relevant functionality.
 
 The modules depend on one another. User and vehicle information is required when creating charging requests. Charging requests interact with the station and charger modules to identify suitable charging resources. The scheduling module processes eligible requests and coordinates charger allocation and charging-session creation. Payment records are associated with charging sessions, while the administration module supports oversight and emergency-related decisions.
+
+The database schema is centralized in "database/schema.sql" and is maintained as a single shared file rather than duplicated across contributor packages. The root ".gitignore" excludes common generated files and local development artifacts, helping keep the repository clean.
+
+The contributions were integrated into the common GitHub repository using separate branches and pull requests. Each contributor's files were added to the appropriate existing directories so that the final repository preserves the intended project structure.
+
+Conclusion
+
+SmartCharge was developed through a modular division of responsibilities among four team members. Asmita established the foundational application configuration, user and vehicle management, and database schema. Akarsh developed station and charger management, payment functionality, and the operator interface. Vanshika implemented the charging-request and charging-session workflow, scheduling algorithms, and charging-related user interfaces. Shiwani developed administration, emergency handling, demo data initialization, and the administrative interface.
