@@ -17,3 +17,5 @@ The project incorporates three operating-system scheduling approaches:
 The scheduling workflow considers charger compatibility and availability before allocating charging resources. The scheduler also contains transaction and locking logic intended to reduce conflicts when multiple requests compete for chargers. Priority and emergency handling are integrated with the broader application workflow.
 
 User Charging Interface: Vanshika developed the charging-related user pages, including "frontend/user/booking.html" and "frontend/user/status.html". These pages provide the interface for creating charging requests and viewing their progress or status.
+
+Overall, Vanshika's contribution focused on charging-request processing, charging-session management, the implementation of scheduling policies, and the user interface for booking and tracking charging services.
