@@ -67,3 +67,7 @@ Administrative Backend: Shiwani developed "AdminController.java" and "AdminServi
 Emergency Management: She developed "EmergencyController.java" and "EmergencyService.java" to support emergency-related operations. The module provides the backend structure for handling emergency requests and their associated status and decision-making workflow. It works alongside the charging-request and scheduling modules so that emergency-related decisions can influence subsequent request processing.
 
 Demo Data Initialization: Shiwani contributed "DemoDataInitializer.java", which provides application startup data initialization functionality. This supports the preparation of demonstration data for development and project evaluation, depending on the initializer's configured behavior.
+
+Administrative Alerts: She developed "frontend/admin/admin-alerts.js", which provides JavaScript functionality for administrative alerts and related frontend behavior.
+
+Administrative Frontend: Shiwani developed the administrative pages, including "frontend/admin/login.html", "frontend/admin/dashboard.html", "frontend/admin/analytics.html", "frontend/admin/emergencies.html", and "frontend/admin/requests.html". These pages provide the interface for administrative access, dashboard monitoring, analytics, emergency review, and charging-request management.
