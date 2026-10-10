@@ -8,6 +8,11 @@ Asmita was responsible for developing the user management and vehicle management
 
 Backend Development: Asmita developed the main Spring Boot application entry point, "SmartChargeApplication.java", which initializes the backend application. She contributed to the backend Maven configuration through "pom.xml", defining the dependencies required for the application, including Spring Boot Web, Spring Data JPA, PostgreSQL, Spring Security, validation, JWT support, and testing libraries. She also worked on "SecurityConfig.java" to configure the application's security settings.
 
+User Management Module: She implemented the user entity, repository, service, and controller. These components represent the user data model, database access layer, business logic, and REST API endpoints. The module provides the foundation for user-related operations, including registration and authentication-related functionality.
+
+Vehicle Management Module: Asmita developed the vehicle entity and its associated repository, service, and controller components. This module manages vehicle information associated with users, such as vehicle registration details, model, vehicle type, and battery capacity. These details are important for calculating charging requirements and creating charging requests.
+
+Database Design and Configuration: She prepared the centralized SQL database schema in "database/schema.sql". The schema defines the principal relational tables for users, vehicles, stations, chargers, charging requests, charging sessions, and payments, along with primary keys, foreign-key relationships, and relevant constraints. This provided the common database structure required by the different modules of the project.
 
 3. Vanshika – Charging Requests, Charging Sessions, Scheduling Algorithms and User Charging Interface
 
