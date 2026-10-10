@@ -20,6 +20,22 @@ Execution Support: She also contributed "start-backend.bat", a Windows batch fil
 
 Overall, Asmita's contribution focused on the application's foundational backend setup, user and vehicle data management, database design, security configuration, and initial user interface.
 
+2. Akarsh – Charging Station Management, Charger Management, Payment Management and Operator Interface
+
+Akarsh was responsible for developing the charging station and charger management modules, the payment module, and the operator-facing frontend. His contribution focused on managing charging infrastructure and providing interfaces through which station operators can interact with the system.
+
+Charging Station Management: Akarsh developed the "Station.java" entity, "StationRepository.java", "StationService.java", and "StationController.java". These components represent charging stations, provide database access, implement station-related business operations, and expose corresponding REST endpoints. The module establishes the structure required to maintain station information such as station names, locations, and operational status.
+
+Charger Management: He developed the charger entity and its supporting repository, service, and controller classes. These include "Charger.java", "ChargerRepository.java", "ChargerService.java", and "ChargerController.java". The module manages charger details such as connector type, charging power, status, and association with a charging station. It provides the foundation for checking charger availability and accessing charger-related information.
+
+Charger Allocation Support: Akarsh implemented "ChargerAllocationService.java" to provide charger allocation functionality. This service searches for available chargers and checks connector compatibility before attempting allocation. It helps connect station and charger management with the charging-session workflow.
+
+Payment Management: He developed the payment module through "Payment.java", "PaymentRepository.java", "PaymentService.java", and "PaymentController.java". These components establish the payment data model, persistence layer, business service, and API endpoints. The payment entity supports information such as the associated charging session, amount, payment status, payment reference, payment method, and payment time.
+
+Operator Frontend: Akarsh developed the operator-facing pages: "frontend/operator/login.html", "frontend/operator/dashboard.html", "frontend/operator/chargers.html", and "frontend/operator/station.html". These interfaces provide the presentation layer for operator access, dashboard information, charger management, and station-related operations.
+
+Overall, Akarsh's contribution focused on the charging infrastructure management layer, charger allocation support, payment-related backend functionality, and the operator interface.
+
 3. Vanshika – Charging Requests, Charging Sessions, Scheduling Algorithms and User Charging Interface
 
 Vanshika was responsible for the charging workflow and scheduling-related modules. Her contribution focused on connecting charging requests with the allocation of charging resources and providing users with interfaces for requesting charging services and monitoring their requests.
