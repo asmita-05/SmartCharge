@@ -147,6 +147,3 @@ SmartCharge/
 - **Port 8080 is already in use:** Stop the other service using the port or change `server.port` in `application.properties`, then open the corresponding local URL.
 - **Routing unavailable:** Set a valid `ORS_API_KEY`; routing also requires internet access and valid coordinates for stations.
 
-## License
-
-No license file is currently included. Add a `LICENSE` file if you intend to grant others explicit reuse rights.
