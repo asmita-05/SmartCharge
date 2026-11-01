@@ -8,9 +8,15 @@ import java.util.List;
 
 public interface ChargingSessionRepository extends JpaRepository<ChargingSession, Long> {
 
+    List<ChargingSession> findAllByOrderByIdDesc();
+
     List<ChargingSession> findByRequestUserId(Long userId);
 
+    List<ChargingSession> findByRequestUserIdOrderByIdDesc(Long userId);
+
     List<ChargingSession> findByStatus(String status);
+
+    List<ChargingSession> findByChargerIdAndStatus(Long chargerId, String status);
 
     List<ChargingSession> findByRequestIdOrderByStartTimeDesc(Long requestId);
 

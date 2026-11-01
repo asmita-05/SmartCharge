@@ -24,7 +24,7 @@ public class SchedulerService {
     public List<ChargingRequest> schedulePendingRequests() {
 
         List<ChargingRequest> pendingRequests =
-                requestRepository.findByStatus("PENDING").stream()
+                requestRepository.findByStatusOrderByIdAsc("PENDING").stream()
                         .filter(request -> !Boolean.TRUE.equals(request.getEmergencyRequested())
                                 || "APPROVED".equalsIgnoreCase(request.getEmergencyStatus())
                                 || "DECLINED".equalsIgnoreCase(request.getEmergencyStatus()))

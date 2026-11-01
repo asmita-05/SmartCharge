@@ -1,6 +1,7 @@
 package smartcharge.station;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -111,11 +112,13 @@ public class ChargerService {
         return chargerRepository.save(charger);
     }
 
+    @Transactional
     public void deleteCharger(Long id) {
 
         Charger charger = getChargerById(id);
 
         chargerRepository.delete(charger);
+        chargerRepository.flush();
     }
 
     private void validateCharger(

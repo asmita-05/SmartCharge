@@ -4,6 +4,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import smartcharge.station.Charger;
 import smartcharge.station.ChargerRepository;
 import smartcharge.station.Station;
@@ -21,7 +22,8 @@ public class DemoDataInitializer {
                                          VehicleRepository vehicles,
                                          StationRepository stations,
                                          ChargerRepository chargers,
-                                         JdbcTemplate jdbcTemplate) {
+                                         JdbcTemplate jdbcTemplate,
+                                         PasswordEncoder passwordEncoder) {
         return args -> {
             // A request may have multiple historical sessions after priority preemption.
             jdbcTemplate.execute("""
@@ -42,11 +44,21 @@ public class DemoDataInitializer {
                     END $$
                     """);
             User user = users.findByEmail("test@smartcharge.com")
-                    .orElseGet(() -> users.save(new User("Test User", "test@smartcharge.com", "123456", "USER")));
+                    .orElseGet(() -> users.save(new User("Test User", "test@smartcharge.com", passwordEncoder.encode("123456"), "USER")));
             users.findByEmail("operator@smartcharge.com")
-                    .orElseGet(() -> users.save(new User("Station Operator", "operator@smartcharge.com", "123456", "OPERATOR")));
+                    .orElseGet(() -> users.save(new User("Station Operator", "operator@smartcharge.com", passwordEncoder.encode("123456"), "OPERATOR")));
             users.findByEmail("admin@smartcharge.com")
-                    .orElseGet(() -> users.save(new User("SmartCharge Admin", "admin@smartcharge.com", "123456", "ADMIN")));
+                    .orElseGet(() -> users.save(new User("SmartCharge Admin", "admin@smartcharge.com", passwordEncoder.encode("123456"), "ADMIN")));
+
+            // Hash any accounts created before password hashing was introduced.
+            for (User existing : users.findAll()) {
+                String password = existing.getPassword();
+                if (password != null && !password.startsWith("$2a$")
+                        && !password.startsWith("$2b$") && !password.startsWith("$2y$")) {
+                    existing.setPassword(passwordEncoder.encode(password));
+                    users.save(existing);
+                }
+            }
 
             if (vehicles.findByRegistrationNumber("UK07AB1234").isEmpty()) {
                 vehicles.save(new Vehicle("UK07AB1234", "Tata Nexon EV", "SUV", 50.0, user));

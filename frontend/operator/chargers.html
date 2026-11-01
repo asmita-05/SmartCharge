@@ -284,6 +284,7 @@
             }
         }
     </style>
+<script src="../shared-auth.js"></script>
 </head>
 
 <body>
@@ -427,7 +428,7 @@
 <script>
 
     const API_BASE_URL =
-        ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+        ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
 
     const storedOperator =
         localStorage.getItem(
@@ -944,7 +945,7 @@
                 await fetch(
                     `${API_BASE_URL}/chargers/${chargerId}/status?status=${encodeURIComponent(status)}`,
                     {
-                        method: "PUT"
+                        method: "PATCH"
                     }
                 );
 
@@ -985,17 +986,6 @@
         chargerId
     ) {
 
-        const confirmed =
-            confirm(
-                "Are you sure you want to delete this charger?"
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
-
         try {
 
             const response =
@@ -1008,14 +998,15 @@
 
 
             if (!response.ok) {
-
-                const errorText =
-                    await response.text();
-
-                throw new Error(
-                    errorText ||
-                    "Unable to delete charger."
-                );
+                const errorText = await response.text();
+                let errorMessage = errorText;
+                try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.message || errorData.detail || errorData.error || errorText;
+                } catch (_) {
+                    // The server returned plain text.
+                }
+                throw new Error(errorMessage || "Unable to delete charger.");
             }
 
 

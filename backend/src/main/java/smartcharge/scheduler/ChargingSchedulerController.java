@@ -8,7 +8,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/charging-scheduler")
-@CrossOrigin("*")
 public class ChargingSchedulerController {
 
     private final ChargingSchedulerService chargingSchedulerService;

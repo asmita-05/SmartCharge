@@ -10,9 +10,21 @@ import java.util.List;
 
 public interface ChargingRequestRepository extends JpaRepository<ChargingRequest, Long> {
 
-    List<ChargingRequest> findByUserId(Long userId);
+    List<ChargingRequest> findAllByOrderByIdAsc();
 
-    List<ChargingRequest> findByStatus(String status);
+    List<ChargingRequest> findAllByOrderByIdDesc();
+
+    List<ChargingRequest> findByUserIdOrderByIdAsc(Long userId);
+
+    List<ChargingRequest> findByUserIdOrderByIdDesc(Long userId);
+
+    List<ChargingRequest> findByStatusOrderByIdAsc(String status);
+
+    List<ChargingRequest> findByStatusOrderByIdDesc(String status);
+
+    List<ChargingRequest> findByEmergencyRequestedTrueOrderByIdDesc();
+
+    List<ChargingRequest> findByStationIdAndStatusOrderByIdAsc(Long stationId, String status);
 
     List<ChargingRequest> findByStatusAndAdminApprovedTrue(String status);
 

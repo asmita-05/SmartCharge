@@ -114,6 +114,19 @@
             cursor: not-allowed;
         }
 
+        .test-login-btn {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #7c3aed;
+            border-radius: 8px;
+            background: white;
+            color: #7c3aed;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
         .message {
             display: none;
             margin-top: 18px;
@@ -150,6 +163,7 @@
             }
         }
     </style>
+<script src="../shared-auth.js"></script>
 </head>
 
 <body>
@@ -202,6 +216,8 @@
 
         </div>
 
+        <button type="button" class="test-login-btn" id="testLoginButton">Test</button>
+
         <button
             type="submit"
             class="login-btn"
@@ -226,7 +242,7 @@
 <script>
 
     const API_BASE_URL =
-        ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+        ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
 
 
     const loginForm =
@@ -238,6 +254,11 @@
         document.getElementById(
             "loginButton"
         );
+
+    document.getElementById("testLoginButton").addEventListener("click", function () {
+        document.getElementById("email").value = "admin@smartcharge.com";
+        document.getElementById("password").value = "123456";
+    });
 
     const message =
         document.getElementById(
@@ -309,13 +330,13 @@
                 }
 
 
-                const user =
+                const authenticatedUser =
                     await response.json();
 
 
                 if (
-                    user.role &&
-                    user.role.toUpperCase() !==
+                    authenticatedUser.role &&
+                    authenticatedUser.role.toUpperCase() !==
                     "ADMIN"
                 ) {
 
@@ -323,6 +344,10 @@
                         "This account does not have administrator access."
                     );
                 }
+
+                const { accessToken, ...user } = authenticatedUser;
+                if (!accessToken) throw new Error("Login succeeded, but no access token was received. Please try again.");
+                sessionStorage.setItem("smartchargeAccessToken", accessToken);
 
 
                 localStorage.setItem(

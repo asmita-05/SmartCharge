@@ -233,6 +233,7 @@
             }
         }
     </style>
+<script src="../shared-auth.js"></script>
 </head>
 
 <body>
@@ -376,7 +377,7 @@
             </h2>
 
             <p>
-                Review and approve or decline emergency requests.
+                Review NLP decisions and override emergency approvals or declines.
             </p>
 
             <a
@@ -461,7 +462,7 @@
 <script>
 
     const API_BASE_URL =
-        ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+        ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
 
 
     const storedAdmin =
@@ -533,7 +534,7 @@
                 ),
 
                 fetch(
-                    `${API_BASE_URL}/admin/emergencies/pending`
+                    `${API_BASE_URL}/admin/emergencies/all`
                 ),
 
                 fetch(
@@ -710,7 +711,9 @@
     }
 
 
-    function logout() {
+    async function logout() {
+        await fetch(`${API_BASE_URL}/users/logout`, { method: "POST" }).catch(() => {});
+        sessionStorage.removeItem("smartchargeAccessToken");
 
         localStorage.removeItem(
             "smartchargeAdmin"

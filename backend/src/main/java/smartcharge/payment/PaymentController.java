@@ -1,87 +1,45 @@
 package smartcharge.payment;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Comparator;
 
 @RestController
 @RequestMapping("/api/payments")
-@CrossOrigin("*")
 public class PaymentController {
-
-    private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
+    private final BookingPaymentService bookingPaymentService;
 
-    public PaymentController(
-            PaymentRepository paymentRepository,
-            PaymentService paymentService) {
-
-        this.paymentRepository = paymentRepository;
+    public PaymentController(PaymentService paymentService, BookingPaymentService bookingPaymentService) {
         this.paymentService = paymentService;
+        this.bookingPaymentService = bookingPaymentService;
     }
 
-    @PostMapping
-    public Payment createPayment(@RequestBody Payment payment) {
-        Payment createdPayment = paymentService.createPayment(payment);
-        return paymentRepository.save(createdPayment);
+    @GetMapping("/mine")
+    public List<PaymentService.PaymentView> mine(Authentication authentication) {
+        return paymentService.getMine(authentication);
     }
 
-    @GetMapping
-    public List<Payment> getAllPayments() {
-        return paymentRepository.findAll();
+    @GetMapping("/attempts/mine")
+    public List<PaymentService.TransactionView> attempts(Authentication authentication) {
+        return java.util.stream.Stream.concat(paymentService.getTransactionHistory(authentication).stream(),
+                        bookingPaymentService.history(authentication).stream())
+                .sorted(Comparator.comparing(PaymentService.TransactionView::attemptedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
     }
 
-    @GetMapping("/{id}")
-    public Payment getPayment(@PathVariable Long id) {
-        return paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+    @GetMapping("/booking/{requestId}")
+    public BookingPaymentService.CheckoutView getBookingCheckout(@PathVariable Long requestId, Authentication authentication) {
+        return bookingPaymentService.getCheckout(requestId, authentication);
     }
 
-    @GetMapping("/session/{sessionId}")
-    public Payment getPaymentBySession(@PathVariable Long sessionId) {
-        return paymentRepository.findBySessionId(sessionId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+    @PostMapping("/booking/{requestId}/attempt")
+    public BookingPaymentService.CheckoutView attemptBookingPayment(@PathVariable Long requestId,
+            @RequestBody BookingPaymentService.PaymentAttempt attempt, Authentication authentication) {
+        return bookingPaymentService.attempt(requestId, attempt, authentication);
     }
 
-    @GetMapping("/status/{status}")
-    public List<Payment> getPaymentsByStatus(
-            @PathVariable String status) {
-
-        return paymentRepository.findByStatus(status);
-    }
-
-    @PutMapping("/{id}/paid")
-    public Payment markAsPaid(
-            @PathVariable Long id,
-            @RequestParam String reference) {
-
-        Payment payment = getPayment(id);
-
-        Payment updatedPayment =
-                paymentService.markAsPaid(payment, reference);
-
-        return paymentRepository.save(updatedPayment);
-    }
-
-    @PutMapping("/{id}/failed")
-    public Payment markAsFailed(@PathVariable Long id) {
-
-        Payment payment = getPayment(id);
-
-        Payment updatedPayment =
-                paymentService.markAsFailed(payment);
-
-        return paymentRepository.save(updatedPayment);
-    }
-
-    @PutMapping("/{id}/refund")
-    public Payment refund(@PathVariable Long id) {
-
-        Payment payment = getPayment(id);
-
-        Payment updatedPayment =
-                paymentService.refund(payment);
-
-        return paymentRepository.save(updatedPayment);
-    }
 }

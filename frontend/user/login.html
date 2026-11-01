@@ -13,6 +13,10 @@
             font-family: Arial, sans-serif;
         }
 
+        [hidden] {
+            display: none !important;
+        }
+
         body {
             min-height: 100vh;
             background: #f4f7fb;
@@ -108,6 +112,19 @@
             cursor: not-allowed;
         }
 
+        .test-login-btn {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #1e88e5;
+            border-radius: 8px;
+            background: white;
+            color: #1e88e5;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
         .message {
             display: none;
             margin-top: 18px;
@@ -157,6 +174,9 @@
             }
         }
     </style>
+<script src="../shared-auth.js"></script>
+    <link rel="stylesheet" href="chatbot.css">
+    <script src="chatbot.js" defer></script>
 </head>
 
 <body>
@@ -172,6 +192,11 @@
     <form id="loginForm">
 
         <div class="form-group">
+            <label for="name" id="nameLabel" hidden>Full name</label>
+            <input type="text" id="name" maxlength="100" autocomplete="name" placeholder="Enter your full name" hidden>
+        </div>
+
+        <div class="form-group">
             <label for="email">Email</label>
             <input
                 type="email"
@@ -182,15 +207,24 @@
         </div>
 
         <div class="form-group">
-            <label for="password">Password</label>
+            <label for="password" id="passwordLabel">Password</label>
             <input
                 type="password"
                 id="password"
                 placeholder="Enter your password"
+                maxlength="72"
+                autocomplete="current-password"
                 required
             >
         </div>
 
+        <div class="form-group">
+            <label for="otp" id="otpLabel" hidden>Email verification code</label>
+            <input type="text" id="otp" inputmode="numeric" autocomplete="one-time-code"
+                   pattern="[0-9]{6}" maxlength="6" placeholder="Enter 6-digit code" hidden>
+        </div>
+
+        <button type="button" class="test-login-btn" id="testLoginButton">Test</button>
         <button type="submit" class="login-btn" id="loginButton">
             Login
         </button>
@@ -200,8 +234,15 @@
     <div id="message" class="message"></div>
 
     <div class="register-text">
-        New user?
-        <a href="#" onclick="showRegistration()">Create an account</a>
+        <span id="registerPrompt">New user?</span>
+        <a href="#" id="modeLink">Create an account</a>
+    </div>
+
+    <div class="register-text" id="verificationActions" hidden>
+        <span>Didn’t receive the email?</span>
+        <a href="#" id="resendLink">Send a new code</a>
+        <span aria-hidden="true"> · </span>
+        <a href="#" id="startOverLink">Start over</a>
     </div>
 
     <a href="../index.html" class="back-link">
@@ -211,50 +252,150 @@
 </div>
 
 <script>
-    const API_BASE_URL = ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+    const API_BASE_URL = ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
 
     const loginForm = document.getElementById("loginForm");
     const loginButton = document.getElementById("loginButton");
+    const testLoginButton = document.getElementById("testLoginButton");
     const message = document.getElementById("message");
+    let registrationMode = false;
+    let verificationMode = false;
+
+    function setVerificationMode() {
+        verificationMode = true;
+        registrationMode = false;
+        document.getElementById("name").hidden = true;
+        document.getElementById("nameLabel").hidden = true;
+        document.getElementById("name").required = false;
+        document.getElementById("password").hidden = true;
+        document.getElementById("passwordLabel").hidden = true;
+        document.getElementById("password").required = false;
+        document.getElementById("otp").hidden = false;
+        document.getElementById("otpLabel").hidden = false;
+        document.getElementById("otp").required = true;
+        document.getElementById("email").readOnly = true;
+        document.getElementById("verificationActions").hidden = false;
+        document.getElementById("modeLink").hidden = true;
+        testLoginButton.hidden = true;
+        document.getElementById("registerPrompt").textContent = "Check your inbox for the verification code.";
+        loginButton.textContent = "Verify email";
+    }
+
+    function setLoginMode() {
+        verificationMode = false;
+        registrationMode = false;
+        document.getElementById("name").hidden = true;
+        document.getElementById("nameLabel").hidden = true;
+        document.getElementById("name").required = false;
+        document.getElementById("password").hidden = false;
+        document.getElementById("passwordLabel").hidden = false;
+        document.getElementById("password").required = true;
+        document.getElementById("password").autocomplete = "current-password";
+        document.getElementById("otp").hidden = true;
+        document.getElementById("otpLabel").hidden = true;
+        document.getElementById("otp").required = false;
+        document.getElementById("email").readOnly = false;
+        document.getElementById("verificationActions").hidden = true;
+        document.getElementById("modeLink").hidden = false;
+        testLoginButton.hidden = false;
+        document.getElementById("registerPrompt").textContent = "New user?";
+        document.getElementById("modeLink").textContent = "Create an account";
+        loginButton.textContent = "Login";
+    }
+
+    document.getElementById("modeLink").addEventListener("click", function (event) {
+        event.preventDefault();
+        registrationMode = !registrationMode;
+        document.getElementById("name").hidden = !registrationMode;
+        document.getElementById("nameLabel").hidden = !registrationMode;
+        document.getElementById("name").required = registrationMode;
+        document.getElementById("password").hidden = false;
+        document.getElementById("passwordLabel").hidden = false;
+        document.getElementById("password").required = true;
+        document.getElementById("password").autocomplete = registrationMode ? "new-password" : "current-password";
+        testLoginButton.hidden = registrationMode;
+        loginButton.textContent = registrationMode ? "Create account" : "Login";
+        document.getElementById("registerPrompt").textContent = registrationMode ? "Already registered?" : "New user?";
+        this.textContent = registrationMode ? "Login" : "Create an account";
+        showMessage("", "");
+    });
+
+    testLoginButton.addEventListener("click", function () {
+        document.getElementById("email").value = "test@smartcharge.com";
+        document.getElementById("password").value = "123456";
+        document.getElementById("email").dispatchEvent(new Event("input", { bubbles: true }));
+        document.getElementById("password").dispatchEvent(new Event("input", { bubbles: true }));
+    });
 
     loginForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
-
-        if (!email || !password) {
-            showMessage("Please enter email and password.", "error");
+        const name = document.getElementById("name").value.trim();
+        const otp = document.getElementById("otp").value.trim();
+        const verifyingAccount = verificationMode;
+        if (!email || (!verificationMode && !password) || (registrationMode && !name) || (verificationMode && !otp)) {
+            showMessage("Please complete all required fields.", "error");
+            return;
+        }
+        if (registrationMode && password.length < 8) {
+            showMessage("Password must contain at least 8 characters.", "error");
             return;
         }
 
         loginButton.disabled = true;
-        loginButton.textContent = "Logging in...";
+        loginButton.textContent = verificationMode ? "Verifying..." : (registrationMode ? "Creating account..." : "Logging in...");
 
         try {
-            const response = await fetch(`${API_BASE_URL}/users/login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email: email,
-                    password: password
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error("Invalid email or password.");
+            if (registrationMode) {
+                const response = await fetch(`${API_BASE_URL}/users/register`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok && !result.verificationPending) {
+                    throw new Error(result.message || (response.status === 409 ? "This email is already registered." : "Unable to start signup."));
+                }
+                setVerificationMode();
+                showMessage(result.message || "A verification code was sent to your email.", "success");
+                return;
             }
 
-            const user = await response.json();
+            if (verificationMode) {
+                const response = await fetch(`${API_BASE_URL}/users/verify`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, otp })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.message || "Unable to verify this code.");
+            }
+
+            const loginResponse = await fetch(`${API_BASE_URL}/users/login`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            if (!loginResponse.ok) {
+                const result = await loginResponse.json().catch(() => ({}));
+                if (verificationMode) {
+                    setLoginMode();
+                    throw new Error("Email verified. Please sign in with your password.");
+                }
+                throw new Error(result.message || "Invalid email or password.");
+            }
+
+            const authenticatedUser = await loginResponse.json();
+            const { accessToken, ...user } = authenticatedUser;
+            if (!accessToken) throw new Error("Login succeeded, but no access token was received. Please try again.");
+            sessionStorage.setItem("smartchargeAccessToken", accessToken);
+            setLoginMode();
 
             localStorage.setItem("smartchargeUser", JSON.stringify(user));
 
-            showMessage("Login successful. Redirecting...", "success");
+            showMessage(verifyingAccount ? "Email verified. Signing you in..." : "Login successful. Redirecting...", "success");
 
             setTimeout(() => {
-                window.location.href = "dashboard.html";
+                window.location.href = "mode.html";
             }, 700);
 
         } catch (error) {
@@ -264,8 +405,34 @@
             );
         } finally {
             loginButton.disabled = false;
-            loginButton.textContent = "Login";
+            loginButton.textContent = verificationMode ? "Verify email" : (registrationMode ? "Create account" : "Login");
         }
+    });
+
+    document.getElementById("resendLink").addEventListener("click", async function (event) {
+        event.preventDefault();
+        this.style.pointerEvents = "none";
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/verify/resend`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: document.getElementById("email").value.trim() })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.message || "Unable to resend code.");
+            showMessage(result.message, "success");
+        } catch (error) {
+            showMessage(error.message || "Unable to resend code.", "error");
+        } finally {
+            setTimeout(() => { this.style.pointerEvents = ""; }, 1000);
+        }
+    });
+
+    document.getElementById("startOverLink").addEventListener("click", function (event) {
+        event.preventDefault();
+        setLoginMode();
+        document.getElementById("otp").value = "";
+        document.getElementById("password").value = "";
+        showMessage("You can start signup again with the same email.", "success");
     });
 
     function showMessage(text, type) {
@@ -273,9 +440,6 @@
         message.className = "message " + type;
     }
 
-    function showRegistration() {
-        alert("Registration page will be added in the next frontend stage.");
-    }
 </script>
 
 </body>

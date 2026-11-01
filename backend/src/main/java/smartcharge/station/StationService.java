@@ -1,6 +1,7 @@
 package smartcharge.station;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -48,11 +49,21 @@ public class StationService {
             existingStation.setStatus(updatedStation.getStatus());
         }
 
+        if (updatedStation.getLatitude() != null) {
+            existingStation.setLatitude(updatedStation.getLatitude());
+        }
+
+        if (updatedStation.getLongitude() != null) {
+            existingStation.setLongitude(updatedStation.getLongitude());
+        }
+
         return stationRepository.save(existingStation);
     }
 
+    @Transactional
     public void deleteStation(Long id) {
         Station station = getStationById(id);
         stationRepository.delete(station);
+        stationRepository.flush();
     }
 }

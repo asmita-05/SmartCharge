@@ -247,6 +247,9 @@
             }
         }
     </style>
+<script src="../shared-auth.js"></script>
+    <link rel="stylesheet" href="chatbot.css">
+    <script src="chatbot.js" defer></script>
 </head>
 
 <body>
@@ -356,6 +359,7 @@
 
                     <textarea
                         id="emergencyReason"
+                        maxlength="500"
                         placeholder="Explain why emergency consideration is required."
                     ></textarea>
                 </div>
@@ -400,7 +404,7 @@
 </div>
 
 <script>
-    const API_BASE_URL = ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+    const API_BASE_URL = ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
 
     const storedUser = localStorage.getItem("smartchargeUser");
 
@@ -655,11 +659,7 @@
                 await response.json();
 
 
-            createdModal.dataset.requestId = request.id;
-            document.getElementById("createdSummary").textContent =
-                `Request #${request.id} was created for ${selectedStationName} · ${selectedCharger.chargerType} (${selectedCharger.connectorType}). ` +
-                (isEmergency ? "It is waiting for Admin priority review." : "It is in the automatic scheduler queue.");
-            createdModal.classList.add("open");
+            window.location.href = `status.html?requestId=${encodeURIComponent(request.id)}&checkout=1`;
 
 
         } catch (error) {
@@ -758,6 +758,11 @@
                 option.textContent = `${station.name}${station.location ? ` — ${station.location}` : ""}`;
                 stationSelect.appendChild(option);
             });
+            const requestedStationId = new URLSearchParams(window.location.search).get("stationId");
+            if (requestedStationId && stations.some(station => String(station.id) === requestedStationId)) {
+                stationSelect.value = requestedStationId;
+                await loadChargers();
+            }
             if (!stations.length) showMessage("No charging stations are configured yet.", "error");
         } catch (error) {
             stationSelect.innerHTML = '<option value="">Unable to load stations</option>';

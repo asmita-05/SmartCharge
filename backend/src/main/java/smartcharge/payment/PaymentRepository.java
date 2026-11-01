@@ -9,5 +9,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     Optional<Payment> findBySessionId(Long sessionId);
 
-    List<Payment> findByStatus(String status);
+    @org.springframework.data.jpa.repository.Query("select p from Payment p where p.session.request.user.id = :userId order by p.paymentTime desc")
+    List<Payment> findForUser(@org.springframework.data.repository.query.Param("userId") Long userId);
 }

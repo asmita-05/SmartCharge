@@ -1,46 +1,42 @@
-# Maven
-target/
+# Local secrets and environment configuration
+.env
+.env.*
+!.env.example
+.ors-key
+.brevo-key
+.brevo-sender
+.jwt-secret
+**/application-local.properties
+**/application-*.local.properties
+
+# Java / Maven build output
 **/target/
 *.class
-
-# Java build artifacts
 *.jar
 *.war
 
-# IntelliJ IDEA
+# Python virtual environments, bytecode, and test/tool caches
+**/.venv/
+**/venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# Downloaded NLP models and model caches (large generated assets)
+backend/nlp/model/
+**/.cache/huggingface/
+
+# Logs and runtime output
+*.log
+logs/
+
+# IDE and operating system files
 .idea/
-*.iml
-
-# VS Code
 .vscode/
-
-# Eclipse
-.classpath
-.project
-.settings/
-
-# OS files
+*.iml
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
-
-# Environment / secrets
-.env
-.env.*
-*.env
-
-# Local application configuration
-application-local.properties
-
-# Node
-node_modules/
-
-# Frontend build output
-dist/
-build/
-
-# Temporary files
-*.tmp
-*.temp
+Desktop.ini

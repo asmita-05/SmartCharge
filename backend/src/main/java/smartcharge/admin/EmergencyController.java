@@ -7,7 +7,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/emergencies")
-@CrossOrigin("*")
 public class EmergencyController {
 
     private final EmergencyService emergencyService;
@@ -51,5 +50,10 @@ public class EmergencyController {
     public List<ChargingRequest> getPendingEmergencies() {
 
         return emergencyService.getPendingEmergencies();
+    }
+
+    @GetMapping("/all")
+    public List<ChargingRequest> getAllEmergencies() {
+        return emergencyService.getAllEmergencies();
     }
 }

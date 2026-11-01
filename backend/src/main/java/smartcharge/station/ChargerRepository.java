@@ -27,6 +27,19 @@ public interface ChargerRepository extends JpaRepository<Charger, Long> {
     );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Charger> findFirstByStationIdAndStatusOrderByIdAsc(
+            Long stationId,
+            String status
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Charger> findFirstByStationIdAndStatusAndConnectorTypeIgnoreCaseOrderByIdAsc(
+            Long stationId,
+            String status,
+            String connectorType
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from Charger c where c.id = :id")
     Optional<Charger> findByIdForUpdate(@Param("id") Long id);
 }

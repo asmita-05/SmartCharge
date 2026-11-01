@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS stations (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     location VARCHAR(255),
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
     status VARCHAR(30) NOT NULL
 );
 
@@ -41,6 +43,7 @@ CREATE TABLE IF NOT EXISTS charging_requests (
     current_battery DOUBLE PRECISION NOT NULL,
     target_battery DOUBLE PRECISION NOT NULL,
     estimated_minutes DOUBLE PRECISION,
+    estimated_wait_minutes DOUBLE PRECISION,
     arrival_time TIMESTAMP NOT NULL,
     status VARCHAR(30) NOT NULL,
     priority VARCHAR(30) NOT NULL,
@@ -52,6 +55,11 @@ CREATE TABLE IF NOT EXISTS charging_requests (
     requested_charger_id BIGINT,
     admin_approved BOOLEAN,
     admin_decision VARCHAR(30),
+    nlp_classification VARCHAR(30),
+    nlp_confidence DOUBLE PRECISION,
+    nlp_model VARCHAR(160),
+    nlp_evaluated_at TIMESTAMP,
+    emergency_decision_source VARCHAR(30),
 
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (vehicle_id) REFERENCES vehicles(id),
@@ -81,6 +89,40 @@ CREATE TABLE IF NOT EXISTS payments (
     payment_reference VARCHAR(100),
     payment_method VARCHAR(50),
     payment_time TIMESTAMP NOT NULL,
+
+    FOREIGN KEY (session_id) REFERENCES charging_sessions(id)
+);
+
+CREATE TABLE IF NOT EXISTS booking_payments (
+    id BIGSERIAL PRIMARY KEY,
+    request_id BIGINT UNIQUE NOT NULL,
+    amount DOUBLE PRECISION NOT NULL,
+    status VARCHAR(30) NOT NULL,
+    payment_reference VARCHAR(100),
+    payment_method VARCHAR(50),
+    payment_time TIMESTAMP NOT NULL,
+    FOREIGN KEY (request_id) REFERENCES charging_requests(id)
+);
+
+CREATE TABLE IF NOT EXISTS booking_payment_attempts (
+    id BIGSERIAL PRIMARY KEY,
+    request_id BIGINT NOT NULL,
+    amount DOUBLE PRECISION NOT NULL,
+    status VARCHAR(30) NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    payment_reference VARCHAR(100),
+    attempted_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (request_id) REFERENCES charging_requests(id)
+);
+
+CREATE TABLE IF NOT EXISTS payment_attempts (
+    id BIGSERIAL PRIMARY KEY,
+    session_id BIGINT NOT NULL,
+    amount DOUBLE PRECISION NOT NULL,
+    status VARCHAR(30) NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    payment_reference VARCHAR(100),
+    attempted_at TIMESTAMP NOT NULL,
 
     FOREIGN KEY (session_id) REFERENCES charging_sessions(id)
 );

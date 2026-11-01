@@ -264,6 +264,9 @@
             .current-request-header { align-items: flex-start; flex-direction: column; }
         }
     </style>
+<script src="../shared-auth.js"></script>
+    <link rel="stylesheet" href="chatbot.css">
+    <script src="chatbot.js" defer></script>
 </head>
 
 <body>
@@ -335,6 +338,14 @@
             </a>
         </div>
 
+        <div class="action-card">
+            <h2>💳 Payment History</h2>
+            <p>Review every payment attempt, including successful payments, failures, methods, amounts and references.</p>
+            <a href="payments.html" class="action-btn secondary-btn">
+                View Payment History
+            </a>
+        </div>
+
     </section>
 
     <section class="status-box">
@@ -362,7 +373,7 @@
 </main>
 
 <script>
-    const API_BASE_URL = ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+    const API_BASE_URL = ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
 
     const storedUser = localStorage.getItem("smartchargeUser");
 
@@ -511,7 +522,9 @@
         card.hidden = false;
     }
 
-    function logout() {
+    async function logout() {
+        await fetch(`${API_BASE_URL}/users/logout`, { method: "POST" }).catch(() => {});
+        sessionStorage.removeItem("smartchargeAccessToken");
         localStorage.removeItem("smartchargeUser");
         window.location.href = "login.html";
     }

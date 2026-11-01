@@ -2,13 +2,13 @@ package smartcharge.station;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/chargers")
-@CrossOrigin(origins = "*")
 public class ChargerController {
 
     private final ChargerService chargerService;
@@ -77,8 +77,12 @@ public class ChargerController {
     public ResponseEntity<String> deleteCharger(
             @PathVariable Long id) {
 
-        chargerService.deleteCharger(id);
-
-        return ResponseEntity.ok("Charger deleted successfully");
+        try {
+            chargerService.deleteCharger(id);
+            return ResponseEntity.ok("Charger deleted successfully");
+        } catch (DataIntegrityViolationException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("This charger cannot be deleted because it is linked to charging requests or charging history.");
+        }
     }
 }

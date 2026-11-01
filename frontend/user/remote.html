@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="origin">
+    <title>SmartCharge - Remote</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { min-height: 100vh; background: #f4f7fb; color: #1e293b; }
+        nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 30px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+        .brand { color: #1e88e5; font-size: 22px; font-weight: 700; }
+        .user-area { display: flex; align-items: center; gap: 15px; }
+        #userName { color: #475569; font-weight: 600; }
+        button { padding: 9px 16px; border: 0; border-radius: 7px; color: #fff; background: #ef4444; cursor: pointer; font-weight: 600; }
+        button:hover { background: #dc2626; }
+        main { max-width: 1600px; margin: 38px auto; padding: 0 20px; }
+        .intro { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; margin-bottom: 24px; }
+        h1 { margin-bottom: 8px; font-size: 28px; }
+        p { color: #64748b; line-height: 1.6; }
+        .refresh-btn { flex: 0 0 auto; padding: 11px 16px; border: 0; border-radius: 8px; background: #1e88e5; color: white; cursor: pointer; font-weight: 700; }
+        .refresh-btn:hover { background: #1565c0; }
+        .refresh-btn:disabled { background: #94a3b8; cursor: wait; }
+        .meta { min-height: 22px; margin: 0 0 14px; font-size: 13px; }
+        .meta.error { color: #b91c1c; }
+        .explorer-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+        .map-panel, .list-panel { min-width: 0; }
+        .panel-title { margin: 0 0 12px; font-size: 17px; }
+        .list-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .list-heading .panel-title { margin: 0; }
+        .connector-filter { width: auto; max-width: 190px; min-width: 150px; padding: 8px 30px 8px 11px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #334155; font-size: 13px; cursor: pointer; }
+        .connector-filter:focus-visible { outline: 2px solid #1e88e5; outline-offset: 2px; }
+        .map-legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 10px; color: #64748b; font-size: 12px; }
+        .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .legend-dot.user { background: #ef4444; border: 2px solid #fff; box-shadow: 0 0 0 1px #b91c1c; }
+        .legend-dot.station { background: #1e88e5; border: 2px solid #fff; box-shadow: 0 0 0 1px #1565c0; }
+        #stationMap { width: 100%; height: min(70vh, 760px); min-height: 380px; border: 1px solid #dbe3ee; border-radius: 12px; background: #e8eef5; box-shadow: 0 4px 15px rgba(0,0,0,.06); z-index: 0; }
+        .map-fallback { display: none; min-height: 380px; padding: 24px; border: 1px solid #dbe3ee; border-radius: 12px; background: white; color: #64748b; line-height: 1.6; }
+        .map-fallback.visible { display: block; }
+        .station-list { display: grid; grid-template-columns: 1fr; gap: 14px; max-height: min(70vh, 760px); min-height: 220px; overflow-y: auto; padding: 2px 5px 4px 2px; }
+        .station-card { padding: 22px; border-radius: 12px; background: white; box-shadow: 0 4px 15px rgba(0,0,0,.06); }
+        .station-card { cursor: pointer; transition: box-shadow .15s ease, transform .15s ease; }
+        .station-card:hover, .station-card:focus-visible, .station-card.selected { outline: none; box-shadow: 0 0 0 2px #1e88e5, 0 6px 18px rgba(30,136,229,.16); }
+        .station-card:hover { transform: translateY(-1px); }
+        .station-marker-shell, .user-marker-shell { background: transparent; border: 0; }
+        .station-map-marker { display: grid; width: 34px; height: 40px; place-items: center; border: 2px solid #fff; border-radius: 50% 50% 50% 4px; background: #1e88e5; box-shadow: 0 2px 7px rgba(15,23,42,.35); color: #fff; font-size: 19px; transform: rotate(-45deg); }
+        .station-map-marker span { transform: rotate(45deg); }
+        .user-map-marker { display: grid; width: 28px; height: 28px; place-items: center; border: 3px solid #fff; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 2px #b91c1c, 0 2px 8px rgba(15,23,42,.35); }
+        .user-map-marker span { width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+        .station-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 7px; }
+        .station-heading h2 { font-size: 19px; }
+        .station-location { margin-bottom: 17px; font-size: 14px; }
+        .route-info { margin: -7px 0 16px; color: #1e40af; font-size: 14px; font-weight: 700; }
+        .route-info.unavailable { color: #64748b; font-weight: 400; }
+        .wait-info { margin: -10px 0 16px; color: #92400e; font-size: 14px; font-weight: 700; }
+        .station-status { flex: 0 0 auto; padding: 5px 9px; border-radius: 999px; background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700; }
+        .station-status.inactive { background: #fee2e2; color: #b91c1c; }
+        .availability { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .availability-item { padding: 12px 8px; border-radius: 8px; background: #f8fafc; text-align: center; }
+        .availability-item strong { display: block; margin-bottom: 4px; font-size: 20px; }
+        .availability-item span { color: #64748b; font-size: 12px; }
+        .empty, .loading { padding: 24px; border-radius: 12px; background: white; color: #64748b; }
+        .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+        .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+        .link { display: inline-block; padding: 11px 16px; border-radius: 8px; background: #1e88e5; color: #fff; text-decoration: none; font-weight: 600; }
+        .link.secondary { background: #475569; }
+        @media (max-width: 850px) { .explorer-layout { grid-template-columns: 1fr; } #stationMap { height: 52vh; min-height: 320px; } .map-fallback { min-height: 320px; } .station-list { max-height: none; overflow: visible; } }
+        @media (max-width: 500px) { nav { padding: 14px 18px; } #userName { display: none; } main { margin-top: 26px; } .intro { flex-direction: column; } .refresh-btn { width: 100%; } #stationMap { height: 46vh; min-height: 280px; } .map-fallback { min-height: 280px; } .station-card { padding: 18px; } .list-heading { align-items: flex-start; } .connector-filter { max-width: 165px; min-width: 130px; } }
+    </style>
+<script src="../shared-auth.js"></script>
+    <link rel="stylesheet" href="chatbot.css">
+    <script src="chatbot.js" defer></script>
+</head>
+<body>
+<nav>
+    <div class="brand">⚡ SmartCharge · Remote</div>
+    <div class="user-area">
+        <span id="userName">User</span>
+        <button onclick="logout()">Logout</button>
+    </div>
+</nav>
+<main>
+    <section class="intro">
+        <div>
+            <h1>Charging stations</h1>
+            <p>Share your location to sort stations by shortest road distance and see estimated driving time. Availability refreshes every 30 seconds.</p>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+            <button id="locationButton" class="refresh-btn" type="button" onclick="requestLocation()">Use my location</button>
+            <button id="refreshButton" class="refresh-btn" type="button" onclick="loadStations()">Refresh stations</button>
+        </div>
+    </section>
+    <p id="stationMessage" class="meta" role="status" aria-live="polite">Loading stations…</p>
+    <section class="explorer-layout" aria-label="Charging station map and list">
+        <div class="map-panel">
+            <h2 class="panel-title">Station map</h2>
+            <div class="map-legend" aria-label="Map marker legend">
+                <span class="legend-item"><span class="legend-dot user"></span>Your location</span>
+                <span class="legend-item"><span class="legend-dot station"></span>Charging station</span>
+            </div>
+            <div id="stationMap" role="application" aria-label="Interactive map of your location and charging stations"></div>
+            <p id="mapFallback" class="map-fallback" role="status">The interactive map could not load. Check your internet connection and refresh; station availability and route sorting are still available in the list.</p>
+        </div>
+        <div class="list-panel">
+            <div class="list-heading">
+                <h2 class="panel-title">Stations, nearest first</h2>
+                <select id="connectorFilter" class="connector-filter" aria-label="Filter stations by connector type">
+                    <option value="">All connectors</option>
+                </select>
+            </div>
+            <section id="stationList" class="station-list" aria-label="Charging station availability">
+                <p class="loading">Loading stations and charger availability…</p>
+            </section>
+        </div>
+    </section>
+    <div class="actions">
+        <a class="link" href="dashboard.html">Open Kiosk Login</a>
+        <a class="link secondary" href="mode.html">Choose another interface</a>
+    </div>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    const API_BASE_URL = location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "http://localhost:8080/api" : "/api";
+    let user;
+    try { user = JSON.parse(localStorage.getItem("smartchargeUser")); }
+    catch (error) { user = null; }
+    if (!user) window.location.href = "login.html";
+    else document.getElementById("userName").textContent = user.name || "User";
+
+    let stationsData = [];
+    let chargersByStation = new Map();
+    let selectedConnectorType = "";
+    let waitByStation = new Map();
+    let routeByStation = new Map();
+    let currentLocation = null;
+    let locationWatchId = null;
+    let lastRouteRequestAt = 0;
+    let stationMap = null;
+    let userLocationMarker = null;
+    let mapHasInitialFit = false;
+    const stationMarkers = new Map();
+    const stationIcon = window.L ? L.divIcon({
+        className: "station-marker-shell",
+        html: '<span class="station-map-marker" aria-hidden="true"><span>⚡</span></span>',
+        iconSize: [34, 42], iconAnchor: [17, 39], popupAnchor: [0, -36]
+    }) : null;
+    const userIcon = window.L ? L.divIcon({
+        className: "user-marker-shell",
+        html: '<span class="user-map-marker" aria-hidden="true"><span></span></span>',
+        iconSize: [30, 30], iconAnchor: [15, 15]
+    }) : null;
+    initializeMap();
+    document.getElementById("connectorFilter").addEventListener("change", event => {
+        selectedConnectorType = event.target.value;
+        mapHasInitialFit = false;
+        renderStations();
+    });
+    document.getElementById("stationList").addEventListener("click", event => {
+        const card = event.target.closest(".station-card");
+        if (card) openStationBooking(card.dataset.stationId);
+    });
+    document.getElementById("stationList").addEventListener("keydown", event => {
+        const card = event.target.closest(".station-card");
+        if (card && (event.key === "Enter" || event.key === " ")) {
+            event.preventDefault();
+            openStationBooking(card.dataset.stationId);
+        }
+    });
+
+    function openStationBooking(stationId) {
+        if (!stationId) return;
+        window.location.href = `booking.html?stationId=${encodeURIComponent(stationId)}`;
+    }
+    if (user) {
+        loadStations();
+        setInterval(loadStations, 30000);
+    }
+
+    function initializeMap() {
+        if (!window.L) {
+            document.getElementById("stationMap").style.display = "none";
+            document.getElementById("mapFallback").classList.add("visible");
+            return;
+        }
+        stationMap = L.map("stationMap", { scrollWheelZoom: true, zoomControl: true })
+            .setView([30.3165, 78.0322], 12);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'
+        }).addTo(stationMap);
+        setTimeout(() => stationMap.invalidateSize(), 0);
+        window.addEventListener("resize", () => stationMap.invalidateSize());
+    }
+
+    function updateMapMarkers() {
+        if (!stationMap) return;
+        const currentIds = new Set();
+        getVisibleStations().forEach(station => {
+            if (!hasValidCoordinates(station)) return;
+            const id = String(station.id);
+            currentIds.add(id);
+            const position = [Number(station.latitude), Number(station.longitude)];
+            const popup = stationPopup(station);
+            let marker = stationMarkers.get(id);
+            if (!marker) {
+                marker = L.marker(position, { icon: stationIcon, title: station.name || "Charging station" })
+                    .addTo(stationMap)
+                    .on("click", () => selectStationCard(id));
+                stationMarkers.set(id, marker);
+            } else {
+                marker.setLatLng(position);
+            }
+            marker.bindPopup(popup);
+        });
+
+        for (const [id, marker] of stationMarkers) {
+            if (!currentIds.has(id)) {
+                stationMap.removeLayer(marker);
+                stationMarkers.delete(id);
+            }
+        }
+
+        if (currentLocation) {
+            const position = [currentLocation.latitude, currentLocation.longitude];
+            if (!userLocationMarker) {
+                userLocationMarker = L.marker(position, {
+                    icon: userIcon, title: "Your current location", zIndexOffset: 1000
+                }).addTo(stationMap).bindPopup("<strong>Your current location</strong>");
+            } else {
+                userLocationMarker.setLatLng(position);
+            }
+        }
+
+        if (!mapHasInitialFit || (currentLocation && !mapFitIncludedLocation)) fitMapToMarkers();
+    }
+
+    let mapFitIncludedLocation = false;
+    function fitMapToMarkers() {
+        const points = [...stationMarkers.values()].map(marker => marker.getLatLng());
+        if (userLocationMarker) points.push(userLocationMarker.getLatLng());
+        if (!points.length) return;
+        if (points.length === 1) stationMap.setView(points[0], 14);
+        else stationMap.fitBounds(L.latLngBounds(points).pad(0.18), { maxZoom: 15 });
+        mapHasInitialFit = true;
+        mapFitIncludedLocation = Boolean(currentLocation);
+        setTimeout(() => stationMap.invalidateSize(), 0);
+    }
+
+    function stationPopup(station) {
+        const route = routeByStation.get(String(station.id));
+        const distance = Number.isFinite(route?.distanceMeters)
+            ? `${formatDistance(route.distanceMeters)} road distance · ${formatDuration(route.durationSeconds)}`
+            : currentLocation ? "Road route unavailable" : "Share your location to see road distance";
+        const availability = (chargersByStation.get(String(station.id)) || []).reduce((counts, charger) => {
+            const status = String(charger.status || "").toUpperCase();
+            if (status === "AVAILABLE") counts.available++;
+            else if (status === "OCCUPIED") counts.occupied++;
+            return counts;
+        }, { available: 0, occupied: 0 });
+        return `<strong>${escapeHtml(station.name || "Charging station")}</strong><br>${escapeHtml(station.location || "Location not provided")}<br>${escapeHtml(distance)}<br>${availability.available} available · ${availability.occupied} occupied`;
+    }
+
+    function hasValidCoordinates(station) {
+        const latitude = Number(station.latitude);
+        const longitude = Number(station.longitude);
+        return station.latitude != null && station.longitude != null
+            && Number.isFinite(latitude) && Number.isFinite(longitude)
+            && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+    }
+
+    function focusStation(id) {
+        const marker = stationMarkers.get(String(id));
+        if (!marker) return;
+        stationMap.setView(marker.getLatLng(), Math.max(stationMap.getZoom(), 14), { animate: true });
+        marker.openPopup();
+        selectStationCard(String(id));
+    }
+
+    function selectStationCard(id) {
+        const cards = [...document.querySelectorAll(".station-card")];
+        cards.forEach(card => card.classList.toggle("selected", card.dataset.stationId === String(id)));
+        const selected = cards.find(card => card.dataset.stationId === String(id));
+        if (selected) {
+            selected.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            selected.focus({ preventScroll: true });
+        }
+    }
+
+    async function loadStations() {
+        const message = document.getElementById("stationMessage");
+        const refreshButton = document.getElementById("refreshButton");
+        refreshButton.disabled = true;
+        message.className = "meta";
+        message.textContent = "Updating station availability…";
+
+        try {
+            const [stationsResponse, chargersResponse, waitsResponse] = await Promise.all([
+                fetch(`${API_BASE_URL}/stations`),
+                fetch(`${API_BASE_URL}/chargers`),
+                fetch(`${API_BASE_URL}/stations/wait-estimates`).catch(() => null)
+            ]);
+            if (!stationsResponse.ok || !chargersResponse.ok) {
+                throw new Error("Could not load station availability. Please try again.");
+            }
+            const [stations, chargers] = await Promise.all([
+                stationsResponse.json(),
+                chargersResponse.json()
+            ]);
+            const waits = waitsResponse?.ok ? await waitsResponse.json().catch(() => []) : [];
+            if (!Array.isArray(stations) || !Array.isArray(chargers)) {
+                throw new Error("The server returned an unexpected station response.");
+            }
+
+            stationsData = stations;
+            waitByStation = new Map(Array.isArray(waits)
+                ? waits.map(item => [String(item.stationId), item.estimatedWaitMinutes])
+                : []);
+            chargersByStation = new Map();
+            chargers.forEach(charger => {
+                const stationId = charger.station?.id;
+                if (stationId == null) return;
+                const grouped = chargersByStation.get(String(stationId)) || [];
+                grouped.push(charger);
+                chargersByStation.set(String(stationId), grouped);
+            });
+            populateConnectorFilter(chargers);
+
+            renderStations();
+            message.textContent = `${locationMessage()}Availability updated ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · ${stations.length} ${stations.length === 1 ? "station" : "stations"}`;
+        } catch (error) {
+            message.textContent = error.message || "Unable to load station availability.";
+            message.className = "meta error";
+            if (!document.getElementById("stationList").children.length) document.getElementById("stationList").innerHTML = '<p class="empty">Station availability is temporarily unavailable.</p>';
+        } finally {
+            refreshButton.disabled = false;
+        }
+    }
+
+    function renderStations() {
+        const list = document.getElementById("stationList");
+        if (!stationsData.length) {
+            list.innerHTML = '<p class="empty">No charging stations are registered yet.</p>';
+            updateMapMarkers();
+            return;
+        }
+        const visibleStations = getVisibleStations();
+        if (!visibleStations.length) {
+            list.innerHTML = '<p class="empty">No stations offer this connector type.</p>';
+            updateMapMarkers();
+            return;
+        }
+        const orderedStations = [...visibleStations];
+        if (currentLocation) {
+            orderedStations.sort((a, b) => {
+                const aRoute = routeByStation.get(String(a.id));
+                const bRoute = routeByStation.get(String(b.id));
+                const aDistance = aRoute?.distanceMeters;
+                const bDistance = bRoute?.distanceMeters;
+                if (Number.isFinite(aDistance) && Number.isFinite(bDistance)) return aDistance - bDistance;
+                if (Number.isFinite(aDistance)) return -1;
+                if (Number.isFinite(bDistance)) return 1;
+                return 0;
+            });
+        }
+        list.innerHTML = orderedStations.map(station => renderStation(
+            station,
+            chargersByStation.get(String(station.id)) || [],
+            routeByStation.get(String(station.id)),
+            waitByStation.get(String(station.id))
+        )).join("");
+        updateMapMarkers();
+    }
+
+    function getVisibleStations() {
+        return selectedConnectorType
+            ? stationsData.filter(station => (chargersByStation.get(String(station.id)) || [])
+                .some(charger => normalizeConnectorType(charger.connectorType) === selectedConnectorType))
+            : stationsData;
+    }
+
+    function populateConnectorFilter(chargers) {
+        const filter = document.getElementById("connectorFilter");
+        const currentValue = selectedConnectorType;
+        const connectorTypes = [...new Map(chargers
+            .filter(charger => charger.connectorType)
+            .map(charger => [normalizeConnectorType(charger.connectorType), connectorLabel(charger.connectorType)]))]
+            .sort((a, b) => a[1].localeCompare(b[1]));
+
+        filter.innerHTML = '<option value="">All connectors</option>';
+        connectorTypes.forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            filter.appendChild(option);
+        });
+        selectedConnectorType = connectorTypes.some(([value]) => value === currentValue) ? currentValue : "";
+        filter.value = selectedConnectorType;
+    }
+
+    function normalizeConnectorType(value) {
+        return String(value || "").trim().toLocaleLowerCase();
+    }
+
+    function connectorLabel(value) {
+        const labels = { TYPE1: "Type 1", TYPE2: "Type 2" };
+        const normalized = String(value || "").trim().toUpperCase();
+        return labels[normalized] || String(value || "").trim();
+    }
+
+    function requestLocation() {
+        const message = document.getElementById("stationMessage");
+        if (!navigator.geolocation) {
+            message.textContent = "This browser does not support location. Stations are shown without distance sorting.";
+            message.className = "meta error";
+            return;
+        }
+        message.className = "meta";
+        message.textContent = "Requesting your location…";
+        navigator.geolocation.getCurrentPosition(async position => {
+            const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+            await updateRoutes(location);
+            if (locationWatchId === null) {
+                locationWatchId = navigator.geolocation.watchPosition(position => {
+                    const changed = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+                    if (!currentLocation || haversineMeters(currentLocation, changed) >= 500) updateRoutes(changed, false);
+                }, () => {}, { enableHighAccuracy: false, maximumAge: 60000, timeout: 60000 });
+            }
+        }, error => {
+            const guidance = error.code === 1
+                ? "Location permission was denied. In Edge, allow Location for this page, then check Windows Settings → Privacy & security → Location and turn on Location services and desktop-app access."
+                : error.code === 2
+                    ? "Edge or Windows could not determine this computer’s position. Turn on Windows Location services. Desktop PCs without location hardware may not be able to provide a position; try from your phone."
+                    : "The location request timed out after 60 seconds. Check Windows Location services and retry; a phone or device with location hardware may get a fix more reliably.";
+            message.textContent = `${guidance} Stations are still shown without distance sorting.`;
+            message.className = "meta error";
+        }, { enableHighAccuracy: false, maximumAge: 60000, timeout: 60000 });
+    }
+
+    async function updateRoutes(location, force = true) {
+        const now = Date.now();
+        if (!force && now - lastRouteRequestAt < 30000) return;
+        lastRouteRequestAt = now;
+        currentLocation = location;
+        routeByStation.clear();
+        renderStations();
+        const message = document.getElementById("stationMessage");
+        message.className = "meta";
+        message.textContent = "Calculating road distances from your location…";
+        try {
+            const query = new URLSearchParams({ latitude: location.latitude, longitude: location.longitude });
+            const response = await fetch(`${API_BASE_URL}/stations/routes?${query}`);
+            if (!response.ok) {
+                let detail = `The backend route endpoint returned HTTP ${response.status}.`;
+                try {
+                    const body = await response.json();
+                    detail = body.detail || body.message || detail;
+                } catch (ignored) { }
+                throw new Error(`Your location was received, but route lookup failed: ${detail}`);
+            }
+            const routes = await response.json();
+            routeByStation = new Map(routes.map(route => [String(route.stationId), route]));
+            renderStations();
+            const routedCount = routes.filter(route => Number.isFinite(route.distanceMeters)).length;
+            const provider = routes.find(route => route.provider)?.provider;
+            const source = provider?.startsWith("OSRM") ? ` · ${provider}` : "";
+            message.textContent = `${locationMessage()}Sorted by road distance${source} · routes found for ${routedCount} of ${stationsData.length} stations.`;
+        } catch (error) {
+            renderStations();
+            message.textContent = `${error.message} Stations remain available without route sorting.`;
+            message.className = "meta error";
+        }
+    }
+
+    function locationMessage() {
+        return currentLocation ? "Using your current location. " : "";
+    }
+
+    function haversineMeters(a, b) {
+        const radians = degrees => degrees * Math.PI / 180;
+        const dLat = radians(b.latitude - a.latitude);
+        const dLon = radians(b.longitude - a.longitude);
+        const value = Math.sin(dLat / 2) ** 2 + Math.cos(radians(a.latitude)) * Math.cos(radians(b.latitude)) * Math.sin(dLon / 2) ** 2;
+        return 6371000 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+    }
+
+    function renderStation(station, chargers, route, estimatedWaitMinutes) {
+        const counts = { available: 0, occupied: 0, unavailable: 0 };
+        chargers.forEach(charger => {
+            const status = String(charger.status || "").toUpperCase();
+            if (status === "AVAILABLE") counts.available++;
+            else if (status === "OCCUPIED") counts.occupied++;
+            else counts.unavailable++;
+        });
+        const stationStatus = String(station.status || "UNKNOWN").toUpperCase();
+        const active = ["ACTIVE", "AVAILABLE", "OPEN"].includes(stationStatus);
+        const hasCoordinates = station.latitude != null && station.longitude != null
+            && Number.isFinite(Number(station.latitude)) && Number.isFinite(Number(station.longitude));
+        const routeText = Number.isFinite(route?.distanceMeters)
+            ? `${formatDistance(route.distanceMeters)} road distance · ${formatDuration(route.durationSeconds)}`
+            : !hasCoordinates ? "Station coordinates not available" : currentLocation ? "No drivable route found" : "Road distance not calculated";
+        const waitText = counts.available > 0 ? ""
+            : estimatedWaitMinutes != null && Number.isFinite(Number(estimatedWaitMinutes))
+                ? `<p class="wait-info">Estimated wait: ${escapeHtml(formatWait(Number(estimatedWaitMinutes)))}</p>`
+                : counts.occupied > 0
+                    ? '<p class="wait-info">Estimated wait unavailable</p>'
+                    : "";
+        return `<article class="station-card" data-station-id="${escapeHtml(station.id)}" tabindex="0" role="link" aria-label="Book a charger at ${escapeHtml(station.name || "Charging station")}.">
+            <div class="station-heading">
+                <h2>${escapeHtml(station.name || "Charging station")}</h2>
+                <span class="station-status${active ? "" : " inactive"}">${escapeHtml(stationStatus)}</span>
+            </div>
+            <p class="station-location">${escapeHtml(station.location || "Location not provided")}</p>
+            <p class="route-info${Number.isFinite(route?.distanceMeters) ? "" : " unavailable"}">${escapeHtml(routeText)}</p>
+            ${waitText}
+            <div class="availability" aria-label="Charger availability">
+                <div class="availability-item"><strong>${counts.available}</strong><span>Available</span></div>
+                <div class="availability-item"><strong>${counts.occupied}</strong><span>Occupied</span></div>
+                <div class="availability-item"><strong>${counts.unavailable}</strong><span>Unavailable</span></div>
+            </div>
+        </article>`;
+    }
+
+    function formatDistance(meters) {
+        return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
+    }
+
+    function formatDuration(seconds) {
+        if (!Number.isFinite(seconds)) return "drive time unavailable";
+        const minutes = Math.max(1, Math.round(seconds / 60));
+        if (minutes < 60) return `about ${minutes} min drive`;
+        const hours = Math.floor(minutes / 60);
+        const remainder = minutes % 60;
+        return remainder ? `about ${hours} hr ${remainder} min drive` : `about ${hours} hr drive`;
+    }
+
+    function formatWait(minutes) {
+        const rounded = Math.max(0, Math.ceil(minutes));
+        if (rounded === 0) return "under 1 min";
+        if (rounded < 60) return `about ${rounded} min`;
+        const hours = Math.floor(rounded / 60);
+        const remainder = rounded % 60;
+        return remainder ? `about ${hours} hr ${remainder} min` : `about ${hours} hr`;
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, character => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[character]);
+    }
+
+    async function logout() {
+        if (locationWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(locationWatchId);
+        await fetch(`${API_BASE_URL}/users/logout`, { method: "POST" }).catch(() => {});
+        sessionStorage.removeItem("smartchargeAccessToken");
+        localStorage.removeItem("smartchargeUser");
+        localStorage.removeItem("smartchargeFocusedRequestId");
+        window.location.href = "login.html";
+    }
+</script>
+</body>
+</html>

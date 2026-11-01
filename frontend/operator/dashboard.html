@@ -246,6 +246,7 @@
             }
         }
     </style>
+<script src="../shared-auth.js"></script>
 </head>
 
 <body>
@@ -412,7 +413,7 @@
 <script>
 
     const API_BASE_URL =
-        ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+        ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
 
 
     const storedOperator =
@@ -669,7 +670,9 @@
     }
 
 
-    function logout() {
+    async function logout() {
+        await fetch(`${API_BASE_URL}/users/logout`, { method: "POST" }).catch(() => {});
+        sessionStorage.removeItem("smartchargeAccessToken");
 
         localStorage.removeItem(
             "smartchargeOperator"

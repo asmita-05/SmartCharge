@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCharge - Payment History</title>
+    <script src="../shared-auth.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; color: #1e293b; background: #f4f7fb; }
+        nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 6%; background: #fff; border-bottom: 1px solid #e2e8f0; }
+        .brand { color: #08784c; font-size: 20px; font-weight: 700; }
+        .back { color: #08784c; text-decoration: none; font-weight: 600; }
+        main { max-width: 1100px; margin: 38px auto; padding: 0 20px; }
+        h1 { margin: 0 0 8px; }
+        .sub { color: #64748b; margin: 0 0 24px; }
+        .summary { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin-bottom: 20px; }
+        .metric, .history { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; box-shadow: 0 5px 18px #0f172a0a; }
+        .metric span { display: block; color: #64748b; font-size: 14px; margin-bottom: 8px; }
+        .metric strong { font-size: 27px; }
+        .history h2 { font-size: 19px; margin: 0 0 14px; }
+        .refresh { border: 0; border-radius: 9px; background: #08784c; color: #fff; padding: 10px 14px; cursor: pointer; font-weight: 600; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; text-align: left; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; }
+        th { color: #64748b; font-size: 13px; }
+        .badge { display: inline-block; padding: 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .paid { color: #126b3c; background: #dcfce7; }
+        .failed { color: #b42318; background: #fee4e2; }
+        .empty, .error { padding: 22px; text-align: center; color: #64748b; }
+        @media(max-width:640px) { .summary { grid-template-columns: 1fr; } main { margin-top: 24px; } }
+    </style>
+    <link rel="stylesheet" href="chatbot.css">
+    <script src="chatbot.js" defer></script>
+</head>
+<body>
+<nav><div class="brand">⚡ SmartCharge</div><a class="back" href="dashboard.html">← Dashboard</a></nav>
+<main>
+    <h1>Payment History</h1>
+    <p class="sub">All simulated payment attempts for your charging sessions. No real payments are made.</p>
+    <section class="summary">
+        <div class="metric"><span>Total attempts</span><strong id="totalCount">—</strong></div>
+        <div class="metric"><span>Successful</span><strong id="successCount">—</strong></div>
+        <div class="metric"><span>Failed</span><strong id="failedCount">—</strong></div>
+    </section>
+    <section class="history">
+        <h2>Transaction log</h2>
+        <button class="refresh" onclick="loadPaymentHistory()">↻ Refresh</button>
+        <div id="historyTable" class="empty">Loading payment attempts…</div>
+    </section>
+</main>
+<script>
+    const API_BASE_URL = ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
+    const storedUser = localStorage.getItem("smartchargeUser");
+    if (!storedUser) window.location.href = "login.html";
+    async function loadPaymentHistory() {
+        const container = document.getElementById("historyTable");
+        container.className = "empty";
+        container.textContent = "Loading payment attempts…";
+        try {
+            const response = await fetch(`${API_BASE_URL}/payments/attempts/mine`);
+            if (!response.ok) throw new Error("Unable to load your payment history.");
+            const attempts = await response.json();
+            const rows = Array.isArray(attempts) ? attempts : [];
+            const successful = rows.filter(item => item.status === "PAID").length;
+            const failed = rows.filter(item => item.status === "FAILED").length;
+            document.getElementById("totalCount").textContent = rows.length;
+            document.getElementById("successCount").textContent = successful;
+            document.getElementById("failedCount").textContent = failed;
+            if (!rows.length) {
+                container.textContent = "No payment attempts yet. After a charging session is completed, its demo payment options will appear in Charging Status.";
+                return;
+            }
+            container.className = "table-wrap";
+            container.innerHTML = `<table><thead><tr><th>Date and time</th><th>Booking / session</th><th>Method</th><th>Amount</th><th>Result</th><th>Reference</th></tr></thead><tbody>${rows.map(item => {
+                const date = item.attemptedAt ? new Date(item.attemptedAt).toLocaleString() : "—";
+                const status = String(item.status || "UNKNOWN");
+                const badge = status === "PAID" ? "paid" : "failed";
+                const relatedRecord = item.requestId ? `Booking #${item.requestId}` : `Session #${item.sessionId}`;
+                return `<tr><td>${escapeHtml(date)}</td><td>${escapeHtml(relatedRecord)}</td><td>${escapeHtml(item.paymentMethod)}</td><td>₹${Number(item.amount || 0).toFixed(2)}</td><td><span class="badge ${badge}">${escapeHtml(status)}</span></td><td>${escapeHtml(item.paymentReference || "—")}</td></tr>`;
+            }).join("")}</tbody></table>`;
+        } catch (error) {
+            container.className = "error";
+            container.textContent = error.message || "Unable to connect to the server.";
+        }
+    }
+    function escapeHtml(value) {
+        const element = document.createElement("span");
+        element.textContent = value ?? "";
+        return element.innerHTML;
+    }
+    if (storedUser) loadPaymentHistory();
+</script>
+</body>
+</html>

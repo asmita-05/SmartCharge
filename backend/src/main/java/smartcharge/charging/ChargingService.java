@@ -1,6 +1,7 @@
 package smartcharge.charging;
 
 import org.springframework.stereotype.Service;
+import smartcharge.admin.EmergencyClassificationService;
 import smartcharge.user.Vehicle;
 import smartcharge.user.VehicleRepository;
 import smartcharge.station.Charger;
@@ -10,6 +11,7 @@ import smartcharge.station.StationRepository;
 
 import java.util.List;
 import java.time.LocalDateTime;
+import java.time.Duration;
 
 @Service
 public class ChargingService {
@@ -19,19 +21,22 @@ public class ChargingService {
     private final VehicleRepository vehicleRepository;
     private final ChargerRepository chargerRepository;
     private final StationRepository stationRepository;
+    private final EmergencyClassificationService emergencyClassificationService;
 
     public ChargingService(
             ChargingRequestRepository requestRepository,
             ChargingSessionRepository sessionRepository,
             VehicleRepository vehicleRepository,
             ChargerRepository chargerRepository,
-            StationRepository stationRepository) {
+            StationRepository stationRepository,
+            EmergencyClassificationService emergencyClassificationService) {
 
         this.requestRepository = requestRepository;
         this.sessionRepository = sessionRepository;
         this.vehicleRepository = vehicleRepository;
         this.chargerRepository = chargerRepository;
         this.stationRepository = stationRepository;
+        this.emergencyClassificationService = emergencyClassificationService;
     }
 
     public ChargingRequest createRequest(ChargingRequest request) {
@@ -52,6 +57,12 @@ public class ChargingService {
         ).orElseThrow(() ->
                 new RuntimeException("Vehicle not found"));
 
+        if (request.getUser() == null || vehicle.getUser() == null
+                || !request.getUser().getId().equals(vehicle.getUser().getId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You can only request charging for your own vehicle");
+        }
+
         request.setVehicle(vehicle);
         if (request.getStation() != null && request.getStation().getId() != null) {
             Station station = stationRepository.findById(request.getStation().getId())
@@ -69,26 +80,83 @@ public class ChargingService {
         }
         request.setAdminApproved(false);
         request.setAdminDecision(null);
-        request.setStatus("PENDING");
+        request.setStatus("PAYMENT_PENDING");
         request.setPriority("NORMAL");
         request.setArrivalTime(LocalDateTime.now());
         boolean emergencyRequested = Boolean.TRUE.equals(request.getEmergencyRequested());
+        request.setEmergencyDecisionSource(null);
+        request.setNlpClassification(null);
+        request.setNlpConfidence(null);
+        request.setNlpModel(null);
+        request.setNlpEvaluatedAt(null);
         request.setEmergencyStatus(emergencyRequested ? "PENDING" : "NONE");
-        if (!emergencyRequested) {
+        if (emergencyRequested) {
+            String reason = request.getEmergencyReason();
+            if (reason == null || reason.isBlank()) {
+                throw new IllegalArgumentException("Please describe why emergency consideration is required");
+            }
+            if (reason.trim().length() > 500) {
+                throw new IllegalArgumentException("Emergency reason must be 500 characters or fewer");
+            }
+            emergencyClassificationService.classify(request, reason);
+        } else {
             request.setEmergencyReason(null);
         }
 
         validateBatteryValues(request);
 
-        // Charging duration will be calculated after
-        // a compatible charger is selected.
-        request.setEstimatedMinutes(null);
+        double energyKwh = vehicle.getBatteryCapacity()
+                * (request.getTargetBattery() - request.getCurrentBattery()) / 100.0;
+        Double chargerPower = request.getRequestedCharger().getPowerKw();
+        request.setEstimatedMinutes(chargerPower == null || chargerPower <= 0
+                ? null : energyKwh / chargerPower * 60.0);
+        request.setEstimatedWaitMinutes(estimateWaitMinutes(request));
 
         return requestRepository.save(request);
     }
 
+    private Double estimateWaitMinutes(ChargingRequest request) {
+        Charger charger = request.getRequestedCharger();
+        if (charger == null) return null;
+        double wait = 0;
+        if ("OCCUPIED".equalsIgnoreCase(charger.getStatus())) {
+            List<ChargingSession> active = sessionRepository.findByChargerIdAndStatus(charger.getId(), "ACTIVE");
+            if (active.isEmpty()) return null;
+            for (ChargingSession session : active) {
+                Double duration = session.getRequest().getEstimatedMinutes();
+                if (duration == null || session.getStartTime() == null) return null;
+                double elapsed = Math.max(0, Duration.between(session.getStartTime(), LocalDateTime.now()).toMillis() / 60_000.0);
+                wait += Math.max(0, duration - elapsed);
+            }
+        } else if (!"AVAILABLE".equalsIgnoreCase(charger.getStatus())) {
+            return null;
+        }
+
+        List<ChargingRequest> earlier = requestRepository.findByStationIdAndStatusOrderByIdAsc(
+                        request.getStation().getId(), "PENDING").stream()
+                .filter(queued -> queued.getRequestedCharger() != null
+                        && charger.getId().equals(queued.getRequestedCharger().getId()))
+                .filter(queued -> !Boolean.TRUE.equals(queued.getEmergencyRequested())
+                        || "APPROVED".equalsIgnoreCase(queued.getEmergencyStatus())
+                        || "DECLINED".equalsIgnoreCase(queued.getEmergencyStatus()))
+                .toList();
+        for (ChargingRequest queued : earlier) {
+            Double duration = queued.getEstimatedMinutes();
+            if (duration == null && queued.getVehicle() != null && queued.getVehicle().getBatteryCapacity() != null
+                    && queued.getCurrentBattery() != null && queued.getTargetBattery() != null
+                    && charger.getPowerKw() != null && charger.getPowerKw() > 0) {
+                double energy = queued.getVehicle().getBatteryCapacity()
+                        * (queued.getTargetBattery() - queued.getCurrentBattery()) / 100.0;
+                duration = energy / charger.getPowerKw() * 60.0;
+            }
+            if (duration == null) return null;
+            wait += duration;
+        }
+        return wait;
+    }
+
     public List<ChargingRequest> getAllRequests() {
-        return requestRepository.findAll();
+        return requestRepository.findAllByOrderByIdDesc();
     }
 
     public ChargingRequest getRequest(Long id) {
@@ -98,11 +166,11 @@ public class ChargingService {
     }
 
     public List<ChargingRequest> getRequestsByUser(Long userId) {
-        return requestRepository.findByUserId(userId);
+        return requestRepository.findByUserIdOrderByIdDesc(userId);
     }
 
     public List<ChargingRequest> getRequestsByStatus(String status) {
-        return requestRepository.findByStatus(status);
+        return requestRepository.findByStatusOrderByIdDesc(status);
     }
 
     public ChargingRequest cancelRequest(Long id) {
@@ -132,7 +200,7 @@ public class ChargingService {
     }
 
     public List<ChargingSession> getAllSessions() {
-        return sessionRepository.findAll();
+        return sessionRepository.findAllByOrderByIdDesc();
     }
 
     public ChargingSession getSession(Long id) {
@@ -142,7 +210,7 @@ public class ChargingService {
     }
 
     public List<ChargingSession> getSessionsByUser(Long userId) {
-        return sessionRepository.findByRequestUserId(userId);
+        return sessionRepository.findByRequestUserIdOrderByIdDesc(userId);
     }
 
     public List<ChargingSession> getSessionsByStatus(String status) {

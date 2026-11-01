@@ -40,7 +40,7 @@ public class ChargingLifecycleScheduler {
             }
         }
 
-        int remainingRequests = requestRepository.findByStatus("PENDING").size();
+        int remainingRequests = requestRepository.findByStatusOrderByIdAsc("PENDING").size();
         for (int i = 0; i < remainingRequests; i++) {
             if (schedulerService.processNextRequest().isEmpty()) break;
         }

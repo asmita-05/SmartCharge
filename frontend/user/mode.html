@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCharge - Choose Login</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #f4f7fb; color: #1e293b; }
+        .container { width: 100%; max-width: 760px; padding: 40px; background: #fff; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.08); }
+        header { text-align: center; margin-bottom: 32px; }
+        .logo-icon { width: 62px; height: 62px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: #1e88e5; color: #fff; font-size: 28px; }
+        h1 { font-size: 27px; margin-bottom: 8px; }
+        header p, .mode-card p { color: #64748b; line-height: 1.55; }
+        .choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .mode-card { display: flex; flex-direction: column; align-items: flex-start; padding: 24px; border: 1px solid #dbe3ed; border-radius: 12px; }
+        .mode-card h2 { margin-bottom: 9px; font-size: 20px; }
+        .mode-card p { flex: 1; margin-bottom: 22px; }
+        .button { display: block; width: 100%; padding: 13px 16px; border-radius: 8px; background: #1e88e5; color: #fff; text-align: center; text-decoration: none; font-weight: 700; }
+        .button:hover { background: #1565c0; }
+        .remote .button { background: #475569; }
+        .remote .button:hover { background: #334155; }
+        .back-link { display: block; margin-top: 24px; color: #64748b; text-align: center; text-decoration: none; font-size: 14px; }
+        @media (max-width: 560px) { .container { padding: 28px 20px; } .choices { grid-template-columns: 1fr; } }
+    </style>
+<script src="../shared-auth.js"></script>
+    <link rel="stylesheet" href="chatbot.css">
+    <script src="chatbot.js" defer></script>
+</head>
+<body>
+<main class="container">
+    <header>
+        <div class="logo-icon" aria-hidden="true">⚡</div>
+        <h1>Choose how to continue</h1>
+        <p>Select the SmartCharge experience you want to use.</p>
+    </header>
+    <section class="choices" aria-label="User interfaces">
+        <article class="mode-card">
+            <h2>Kiosk Login</h2>
+            <p>Use the current SmartCharge user interface to manage vehicles, book charging, and view charging status.</p>
+            <a class="button" href="dashboard.html">Continue to Kiosk</a>
+        </article>
+        <article class="mode-card remote">
+            <h2>Remote Login</h2>
+            <p>Open your separate remote SmartCharge interface.</p>
+            <a class="button" href="remote.html">Continue to Remote</a>
+        </article>
+    </section>
+    <a class="back-link" href="login.html">← Back to user login</a>
+</main>
+<script>
+    const storedUser = localStorage.getItem("smartchargeUser");
+    if (!storedUser) window.location.href = "login.html";
+    else {
+        try { JSON.parse(storedUser); }
+        catch (error) { localStorage.removeItem("smartchargeUser"); window.location.href = "login.html"; }
+    }
+</script>
+</body>
+</html>

@@ -3,339 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>SmartCharge - Analytics</title>
-
+    <title>SmartCharge - Admin Analytics</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background: #f4f7fb;
-            color: #1e293b;
-        }
-
-        .navbar {
-            background: white;
-            padding: 16px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        }
-
-        .brand {
-            font-size: 22px;
-            font-weight: bold;
-            color: #7c3aed;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #475569;
-            font-weight: 600;
-            padding: 8px 12px;
-            border-radius: 6px;
-        }
-
-        .nav-links a:hover {
-            background: #f1f5f9;
-        }
-
-        .logout-btn {
-            border: none;
-            padding: 9px 16px;
-            border-radius: 7px;
-            background: #ef4444;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .logout-btn:hover {
-            background: #dc2626;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 35px auto;
-            padding: 0 20px;
-        }
-
-        .header {
-            margin-bottom: 25px;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 7px;
-        }
-
-        .header p {
-            color: #64748b;
-        }
-
-        .notice {
-            background: white;
-            padding: 35px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .icon {
-            font-size: 50px;
-            margin-bottom: 15px;
-        }
-
-        .notice h2 {
-            margin-bottom: 10px;
-        }
-
-        .notice p {
-            color: #64748b;
-            line-height: 1.6;
-            max-width: 650px;
-            margin: 0 auto;
-        }
-
-        .planned {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 18px;
-        }
-
-        .metric {
-            background: white;
-            padding: 22px;
-            border-radius: 10px;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .metric h3 {
-            font-size: 15px;
-            margin-bottom: 8px;
-        }
-
-        .metric p {
-            color: #64748b;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .back-btn {
-            display: inline-block;
-            margin-top: 25px;
-            padding: 11px 18px;
-            border-radius: 7px;
-            background: #7c3aed;
-            color: white;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .back-btn:hover {
-            background: #6d28d9;
-        }
-
-        @media (max-width: 850px) {
-            .planned {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .nav-links a {
-                display: none;
-            }
-        }
-
-        @media (max-width: 550px) {
-            .planned {
-                grid-template-columns: 1fr;
-            }
-
-            .navbar {
-                padding: 14px 18px;
-            }
-        }
+        *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}body{background:#f4f7fb;color:#172033}.navbar{background:#fff;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px #0000000c}.brand{font-size:21px;font-weight:700;color:#7c3aed}.nav-links{display:flex;gap:8px;align-items:center}.nav-links a{color:#475569;text-decoration:none;font-weight:600;padding:9px 12px;border-radius:7px}.nav-links a:hover,.nav-links a.active{background:#f3e8ff;color:#6d28d9}.logout-btn{border:0;padding:9px 15px;border-radius:7px;background:#ef4444;color:#fff;font-weight:600;cursor:pointer}.container{max-width:1250px;margin:32px auto;padding:0 22px}.heading{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px}.heading h1{font-size:28px;margin-bottom:6px}.heading p,.muted{color:#64748b}.range-control{display:flex;align-items:center;gap:9px;color:#475569;font-weight:600}.range-control select{padding:10px 36px 10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#172033;font-size:14px}.status{padding:12px 15px;border-radius:8px;margin-bottom:18px;background:#eef2ff;color:#4338ca}.status.error{background:#fef2f2;color:#b91c1c}.status[hidden]{display:none}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}.card,.panel{background:#fff;border-radius:12px;padding:20px;box-shadow:0 3px 14px #0f172a0a;border:1px solid #edf0f5}.card-label{color:#64748b;font-size:13px;font-weight:600}.card-value{font-size:29px;font-weight:700;margin:12px 0 7px;color:#111827}.card-note{font-size:12px;color:#94a3b8;line-height:1.4}.grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);gap:18px;margin-bottom:18px}.panel h2{font-size:17px;margin-bottom:5px}.panel-subtitle{font-size:12px;color:#94a3b8;margin-bottom:18px}.chart-wrap{height:250px;position:relative}.chart-wrap canvas{width:100%;height:100%;display:block}.legend{display:flex;gap:18px;font-size:12px;color:#64748b;margin-top:12px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:#7c3aed}.dot.green{background:#10b981}.status-list{display:grid;gap:14px}.status-row{display:grid;grid-template-columns:95px 1fr 35px;align-items:center;gap:10px;font-size:13px}.bar{height:9px;background:#f1f5f9;border-radius:20px;overflow:hidden}.bar span{height:100%;display:block;background:#8b5cf6;border-radius:20px}.status-count{text-align:right;font-weight:700}.station-list{display:grid;gap:15px}.station-header,.station-row{display:grid;grid-template-columns:minmax(130px,1fr) 1.2fr 62px minmax(110px,auto);align-items:center;gap:14px}.station-header{margin-bottom:10px;color:#64748b;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}.station-header .util-label{grid-column:2 / span 2}.station-header .revenue-label{text-align:right}.station-name{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.station-meta{font-size:11px;color:#94a3b8;margin-top:4px}.station-util{font-weight:700;font-size:13px;text-align:right}.station-bar{height:8px;background:#f1f5f9;border-radius:10px;overflow:hidden}.station-bar span{height:100%;display:block;background:#22c55e;border-radius:10px}.empty{padding:20px;text-align:center;color:#94a3b8;font-size:14px}.footnote{font-size:12px;line-height:1.5;color:#64748b;margin:6px 2px 24px}.refresh{font-size:11px;color:#94a3b8;margin-left:auto}@media(max-width:900px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}}@media(max-width:600px){.navbar{padding:13px 16px}.nav-links a{display:none}.container{margin:22px auto;padding:0 14px}.heading{align-items:flex-start;flex-direction:column}.cards{gap:10px}.card{padding:15px}.card-value{font-size:24px}.station-header,.station-row{grid-template-columns:minmax(100px,1fr) 1fr 48px minmax(90px,auto);gap:9px}}
     </style>
+    <style>
+        body{background:linear-gradient(180deg,#f6f5ff 0,#f7f9fc 280px,#f7f9fc 100%)}
+        .navbar{background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid #e9e7f3}
+        .brand{letter-spacing:-.03em}
+        .container{max-width:1320px}
+        .heading{padding:26px 28px;border-radius:18px;background:linear-gradient(120deg,#312e81,#6d28d9 62%,#8b5cf6);color:white;box-shadow:0 14px 34px #4338ca24}
+        .heading h1{font-size:32px;letter-spacing:-.04em}
+        .heading p,.heading .muted{color:#e0e7ff}
+        .range-control{color:#fff}.range-control select{border:0;box-shadow:0 4px 12px #1e1b4b25}
+        .status{box-shadow:0 3px 12px #0f172a0a}
+        .cards{gap:14px}
+        .card,.panel{border:1px solid #e8eaf2;border-radius:16px;box-shadow:0 7px 24px #1725540a;transition:transform .18s ease,box-shadow .18s ease}
+        .card:hover,.panel:hover{transform:translateY(-2px);box-shadow:0 12px 28px #17255412}
+        .card{position:relative;overflow:hidden;padding:21px}
+        .card:after{content:"";position:absolute;right:-22px;top:-26px;width:88px;height:88px;border-radius:50%;background:#ede9fe;opacity:.72}
+        .card-value{position:relative;z-index:1;color:#312e81;letter-spacing:-.04em}
+        .card-note{position:relative;z-index:1}
+        .panel{padding:23px}
+        .panel h2{font-size:19px;letter-spacing:-.02em}
+        .panel-subtitle{font-size:13px;margin:6px 0 18px}
+        .grid{align-items:stretch}
+        .chart-wrap{height:290px}
+        .chart-wrap canvas,.revenue-chart-wrap canvas{width:100%;height:100%;display:block}
+        .legend{align-items:center;gap:16px;flex-wrap:wrap}
+        .legend .dot{background:#7657e8}.legend .dot.green{background:#10b981}
+        .status-list{display:grid;grid-template-columns:minmax(170px,.9fr) 1.1fr;align-items:center;gap:16px;min-height:290px}
+        #statusChart{width:100%;max-width:220px;height:220px;justify-self:center}
+        .status-legend{display:grid;gap:11px}
+        .status-legend-row{display:grid;grid-template-columns:12px minmax(0,1fr) auto;align-items:center;gap:9px;font-size:13px;color:#475569}
+        .status-legend-dot{width:10px;height:10px;border-radius:50%}
+        .status-legend-row strong{color:#172033}
+        .revenue-panel{margin-bottom:18px}
+        .revenue-chart-wrap{height:250px;position:relative}
+        .station-header{color:#64748b}
+        @media(max-width:700px){.heading{padding:20px;align-items:flex-start;flex-direction:column}.heading h1{font-size:27px}.status-list{grid-template-columns:1fr;gap:8px;min-height:0}#statusChart{height:190px;width:190px}.chart-wrap{height:250px}.revenue-chart-wrap{height:230px}}
+    </style>
+<script src="../shared-auth.js"></script>
 </head>
-
 <body>
-
 <nav class="navbar">
-
-    <div class="brand">
-        ⚡ SmartCharge Admin
-    </div>
-
+    <div class="brand">⚡ SmartCharge Admin</div>
     <div class="nav-links">
-
-        <a href="dashboard.html">
-            Dashboard
-        </a>
-
-        <a href="requests.html">
-            Requests
-        </a>
-
-        <a href="emergencies.html">
-            Emergencies
-        </a>
-
-        <a href="analytics.html">
-            Analytics
-        </a>
-
-        <button
-            class="logout-btn"
-            onclick="logout()"
-        >
-            Logout
-        </button>
-
+        <a href="dashboard.html">Dashboard</a><a href="requests.html">Requests</a><a href="emergencies.html">Emergencies</a><a class="active" href="analytics.html" aria-current="page">Analytics</a>
+        <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
-
 </nav>
-
-
 <main class="container">
-
-    <section class="header">
-
-        <h1>
-            Analytics
-        </h1>
-
-        <p>
-            SmartCharge scheduling and operational analytics.
-        </p>
-
+    <header class="heading">
+        <div><h1>Analytics</h1><p class="muted">A clear view of charging demand, station performance and earnings.</p></div>
+        <label class="range-control" for="rangeSelect">Period
+            <select id="rangeSelect" aria-label="Analytics period"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select>
+        </label>
+    </header>
+    <div id="statusMessage" class="status" role="status" hidden></div>
+    <section class="cards" aria-label="Summary metrics">
+        <article class="card"><div class="card-label">Charging requests</div><div id="totalRequests" class="card-value">—</div><div class="card-note">Requests created in this period</div></article>
+        <article class="card"><div class="card-label">Completed requests</div><div id="completedRequests" class="card-value">—</div><div class="card-note">Of the requests created in this period</div></article>
+        <article class="card"><div class="card-label">Average waiting time</div><div id="averageWait" class="card-value">—</div><div class="card-note">Arrival to charger start, for sessions started in this period</div></article>
+        <article class="card"><div class="card-label">Charger utilization</div><div id="utilization" class="card-value">—</div><div class="card-note">Observed occupied time divided by available fleet time</div></article>
+        <article class="card"><div class="card-label">Pending requests</div><div id="pendingRequests" class="card-value">—</div><div class="card-note">Requests still pending from this period</div></article>
+        <article class="card"><div class="card-label">Active sessions</div><div id="activeSessions" class="card-value">—</div><div class="card-note">Currently charging</div></article>
+        <article class="card"><div class="card-label">Energy delivered</div><div id="energy" class="card-value">—</div><div class="card-note">Recorded on sessions completed in this period</div></article>
+        <article class="card"><div class="card-label">Installed chargers</div><div id="chargers" class="card-value">—</div><div class="card-note">Current fleet size</div></article>
+        <article class="card"><div class="card-label">All-time revenue</div><div id="totalRevenue" class="card-value">—</div><div class="card-note">Successful payments recorded across all stations</div></article>
     </section>
-
-
-    <section class="notice">
-
-        <div class="icon">
-            📊
-        </div>
-
-        <h2>
-            Analytics Module — Planned
-        </h2>
-
-        <p>
-            Detailed analytics will be implemented in a later
-            phase of SmartCharge. The current Phase 2 focuses on
-            user requests, charger management, scheduling,
-            emergency handling and concurrent resource allocation.
-        </p>
-
-        <a
-            href="dashboard.html"
-            class="back-btn"
-        >
-            Back to Dashboard
-        </a>
-
+    <section class="grid">
+        <article class="panel"><h2>Charging activity</h2><p class="panel-subtitle">Grouped bars make daily booking demand and completed charging easy to compare</p><div class="chart-wrap"><canvas id="trendChart" aria-label="Grouped bar chart of daily requests and completed charging sessions"></canvas></div><div class="legend"><span><i class="dot"></i>Requests</span><span><i class="dot green"></i>Completed sessions</span><span id="updatedAt" class="refresh"></span></div></article>
+        <article class="panel"><h2>Request status mix</h2><p class="panel-subtitle">How requests created during the selected period are progressing</p><div id="statusList" class="status-list"></div></article>
     </section>
-
-
-    <section class="planned">
-
-        <div class="metric">
-
-            <h3>
-                Waiting Time
-            </h3>
-
-            <p>
-                Average time between request arrival and charger allocation.
-            </p>
-
-        </div>
-
-
-        <div class="metric">
-
-            <h3>
-                Turnaround Time
-            </h3>
-
-            <p>
-                Time between request arrival and charging completion.
-            </p>
-
-        </div>
-
-
-        <div class="metric">
-
-            <h3>
-                Throughput
-            </h3>
-
-            <p>
-                Number of completed charging requests over a defined period.
-            </p>
-
-        </div>
-
-
-        <div class="metric">
-
-            <h3>
-                Charger Utilization
-            </h3>
-
-            <p>
-                Percentage of operating time during which chargers are occupied.
-            </p>
-
-        </div>
-
-    </section>
-
+    <section class="panel revenue-panel"><h2>Revenue by station</h2><p class="panel-subtitle">All-time income from successful payments, compared across stations</p><div class="revenue-chart-wrap"><canvas id="stationRevenueChart" aria-label="Horizontal bar chart of all-time revenue by station"></canvas></div></section>
+    <section class="panel"><h2>Station performance and revenue</h2><p class="panel-subtitle">Utilization and completed sessions follow the selected period; revenue is all time</p><div class="station-header" aria-hidden="true"><span>Station</span><span class="util-label">Utilization</span><span class="revenue-label">All-time revenue</span></div><div id="stationList" class="station-list"></div></section>
+    <p class="footnote">Utilization is an estimate based on recorded session start and end times and the current installed charger count. Chargers added or removed during the selected period may affect the estimate. Waiting time uses completed allocations with a recorded request arrival time; energy totals include sessions where energy was recorded. Revenue sums successful advance and legacy session payments by station; failed attempts are excluded.</p>
 </main>
-
-
 <script>
+const API_BASE_URL = `${window.location.protocol}//${window.location.host}/api`;
+const storedAdmin = localStorage.getItem("smartchargeAdmin");
+if (!storedAdmin) window.location.href = "login.html";
+const numberFormat = new Intl.NumberFormat();
+const rangeSelect = document.getElementById("rangeSelect");
+let currentDaily = [];
+let currentStatuses = [];
+let currentStations = [];
+let resizeTimer;
 
-    const storedAdmin =
-        localStorage.getItem(
-            "smartchargeAdmin"
-        );
+function showMessage(message, error = false) {
+    const element = document.getElementById("statusMessage");
+    element.textContent = message;
+    element.classList.toggle("error", error);
+    element.hidden = !message;
+}
 
+function setText(id, value) { document.getElementById(id).textContent = value; }
 
-    if (!storedAdmin) {
-
-        window.location.href =
-            "login.html";
+async function loadAnalytics() {
+    showMessage("Loading analytics…");
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/analytics?days=${encodeURIComponent(rangeSelect.value)}`, {
+            credentials: "same-origin", headers: { "Accept": "application/json" }
+        });
+        if (response.status === 401 || response.status === 403) {
+            showMessage("Your admin session has expired. Please sign in again.", true);
+            localStorage.removeItem("smartchargeAdmin");
+            sessionStorage.removeItem("smartchargeAccessToken");
+            setTimeout(() => window.location.href = "login.html", 1000);
+            return;
+        }
+        if (!response.ok) throw new Error("Analytics could not be loaded. Please try again.");
+        const data = await response.json();
+        renderAnalytics(data);
+        showMessage("");
+    } catch (error) {
+        showMessage(error.message || "Could not connect to the server.", true);
     }
+}
 
+function renderAnalytics(data) {
+    const summary = data.summary || {};
+    setText("totalRequests", numberFormat.format(summary.totalRequests || 0));
+    setText("completedRequests", numberFormat.format(summary.completedRequests || 0));
+    setText("averageWait", `${Number(summary.averageWaitingMinutes || 0).toLocaleString(undefined, { maximumFractionDigits: 1 })} min`);
+    setText("utilization", `${Number(summary.chargerUtilizationPercent || 0).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`);
+    setText("pendingRequests", numberFormat.format(summary.pendingRequests || 0));
+    setText("activeSessions", numberFormat.format(summary.activeSessions || 0));
+    setText("energy", `${Number(summary.energyKwh || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} kWh`);
+    setText("chargers", numberFormat.format(summary.totalChargers || 0));
+    setText("totalRevenue", `₹${Number(data.totalRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    currentDaily = data.daily || [];
+    currentStatuses = data.statuses || [];
+    currentStations = data.stations || [];
+    renderTrend(currentDaily);
+    renderStatuses(currentStatuses);
+    renderStations(currentStations);
+    renderStationRevenue(currentStations);
+    const updated = data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+    setText("updatedAt", updated ? `Updated ${updated}` : "");
+}
 
-    function logout() {
-
-        localStorage.removeItem(
-            "smartchargeAdmin"
-        );
-
-        window.location.href =
-            "login.html";
+function renderTrend(points) {
+    const canvas = document.getElementById("trendChart");
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(rect.width * ratio));
+    canvas.height = Math.max(1, Math.round(rect.height * ratio));
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    const width = rect.width, height = rect.height;
+    const pad = { top: 16, right: 14, bottom: 34, left: 38 };
+    const chartWidth = width - pad.left - pad.right, chartHeight = height - pad.top - pad.bottom;
+    ctx.clearRect(0, 0, width, height);
+    if (!points.length || !chartWidth || !chartHeight) return;
+    const groupSize = Math.max(1, Math.ceil(points.length / 14));
+    const groups = [];
+    for (let i = 0; i < points.length; i += groupSize) {
+        const chunk = points.slice(i, i + groupSize);
+        groups.push({ label: chunk[chunk.length - 1].label, requests: chunk.reduce((sum, p) => sum + (p.requests || 0), 0), completed: chunk.reduce((sum, p) => sum + (p.completedSessions || 0), 0) });
     }
+    const maxValue = Math.max(1, ...groups.map(p => Math.max(p.requests, p.completed)));
+    ctx.font = "11px Arial"; ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillStyle = "#94a3b8";
+    for (let i = 0; i <= 4; i++) {
+        const y = pad.top + chartHeight * i / 4;
+        ctx.strokeStyle = "#edf0f7"; ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke();
+        ctx.fillText(String(Math.round(maxValue * (4 - i) / 4)), pad.left - 7, y);
+    }
+    const step = chartWidth / groups.length;
+    const barWidth = Math.min(16, Math.max(4, step * .27));
+    groups.forEach((point, i) => {
+        const center = pad.left + step * (i + .5);
+        const requestHeight = chartHeight * point.requests / maxValue;
+        const completedHeight = chartHeight * point.completed / maxValue;
+        if (requestHeight > 0) { ctx.fillStyle = "#7657e8"; ctx.beginPath(); ctx.roundRect(center - barWidth - 2, pad.top + chartHeight - requestHeight, barWidth, requestHeight, [4, 4, 0, 0]); ctx.fill(); }
+        if (completedHeight > 0) { ctx.fillStyle = "#10b981"; ctx.beginPath(); ctx.roundRect(center + 2, pad.top + chartHeight - completedHeight, barWidth, completedHeight, [4, 4, 0, 0]); ctx.fill(); }
+    });
+    ctx.fillStyle = "#94a3b8"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    const labelStep = Math.max(1, Math.ceil(groups.length / 7));
+    groups.forEach((p, i) => { if (i % labelStep === 0 || i === groups.length - 1) {
+        const x = pad.left + step * (i + .5);
+        ctx.fillText(p.label, x, height - pad.bottom + 9);
+    }});
+}
 
+function renderStatuses(statuses) {
+    const root = document.getElementById("statusList"); root.replaceChildren();
+    const total = statuses.reduce((sum, item) => sum + item.count, 0);
+    if (!statuses.length) { root.innerHTML = '<div class="empty">No requests in this period.</div>'; return; }
+    const canvas = document.createElement("canvas"); canvas.id = "statusChart"; canvas.setAttribute("aria-label", `Request status breakdown for ${total} requests`);
+    const legend = document.createElement("div"); legend.className = "status-legend";
+    root.append(canvas, legend);
+    const ratio = window.devicePixelRatio || 1; canvas.width = 220 * ratio; canvas.height = 220 * ratio;
+    const ctx = canvas.getContext("2d"); ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    const colors = ["#7657e8", "#10b981", "#f59e0b", "#ef4444", "#0ea5e9", "#64748b", "#ec4899"];
+    let start = -Math.PI / 2;
+    statuses.forEach((item, index) => {
+        const angle = total ? item.count / total * Math.PI * 2 : 0;
+        ctx.beginPath(); ctx.moveTo(110, 110); ctx.arc(110, 110, 92, start, start + angle); ctx.closePath();
+        ctx.fillStyle = colors[index % colors.length]; ctx.fill(); start += angle;
+        const row = document.createElement("div"); row.className = "status-legend-row";
+        const dot = document.createElement("i"); dot.className = "status-legend-dot"; dot.style.background = colors[index % colors.length];
+        const label = document.createElement("span"); label.textContent = item.status;
+        const count = document.createElement("strong"); count.textContent = numberFormat.format(item.count);
+        row.append(dot, label, count); legend.append(row);
+    });
+    ctx.beginPath(); ctx.arc(110, 110, 58, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#172033"; ctx.font = "700 27px Arial"; ctx.fillText(numberFormat.format(total), 110, 103);
+    ctx.fillStyle = "#94a3b8"; ctx.font = "12px Arial"; ctx.fillText("requests", 110, 129);
+}
+
+function renderStationRevenue(stations) {
+    const wrap = document.querySelector(".revenue-chart-wrap");
+    const sorted = [...stations].sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0));
+    if (!sorted.length) { wrap.innerHTML = '<div class="empty">No station revenue data is available.</div>'; return; }
+    if (!document.getElementById("stationRevenueChart")) wrap.innerHTML = '<canvas id="stationRevenueChart" aria-label="Horizontal bar chart of all-time revenue by station"></canvas>';
+    const canvas = document.getElementById("stationRevenueChart");
+    wrap.style.height = `${Math.max(190, sorted.length * 48 + 24)}px`;
+    const rect = canvas.getBoundingClientRect(); const ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(rect.width * ratio)); canvas.height = Math.max(1, Math.round(rect.height * ratio));
+    const ctx = canvas.getContext("2d"); ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    const width = rect.width, height = rect.height; ctx.clearRect(0, 0, width, height);
+    const max = Math.max(1, ...sorted.map(station => Number(station.revenue || 0)));
+    const labelWidth = Math.min(210, Math.max(125, width * .22));
+    const valueWidth = 100; const barWidth = Math.max(50, width - labelWidth - valueWidth - 22);
+    const rowHeight = height / sorted.length;
+    sorted.forEach((station, index) => {
+        const y = rowHeight * index + rowHeight / 2;
+        const value = Number(station.revenue || 0);
+        ctx.font = "600 13px Arial"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#334155";
+        let name = station.stationName || "Station";
+        while (name.length > 25) name = name.slice(0, -4) + "…";
+        ctx.fillText(name, 2, y);
+        const x = labelWidth;
+        ctx.fillStyle = "#f1f5f9"; ctx.beginPath(); ctx.roundRect(x, y - 9, barWidth, 18, 9); ctx.fill();
+        const fillWidth = value ? Math.max(7, barWidth * value / max) : 0;
+        const gradient = ctx.createLinearGradient(x, 0, x + Math.max(fillWidth, 1), 0); gradient.addColorStop(0, "#7c3aed"); gradient.addColorStop(1, "#10b981");
+        if (fillWidth) { ctx.fillStyle = gradient; ctx.beginPath(); ctx.roundRect(x, y - 9, fillWidth, 18, 9); ctx.fill(); }
+        ctx.font = "700 13px Arial"; ctx.textAlign = "right"; ctx.fillStyle = "#172033";
+        ctx.fillText(`₹${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, width - 2, y);
+    });
+}
+
+function renderStations(stations) {
+    const root = document.getElementById("stationList"); root.replaceChildren();
+    if (!stations.length) { root.innerHTML = '<div class="empty">No station charger data is available.</div>'; return; }
+    stations.forEach(station => {
+        const row = document.createElement("div"); row.className = "station-row";
+        const info = document.createElement("div");
+        const name = document.createElement("div"); name.className = "station-name"; name.textContent = station.stationName;
+        const meta = document.createElement("div"); meta.className = "station-meta"; meta.textContent = `${station.chargerCount} charger${station.chargerCount === 1 ? "" : "s"} · ${station.completedSessions} completed`;
+        info.append(name, meta);
+        const bar = document.createElement("div"); bar.className = "station-bar"; bar.setAttribute("aria-label", `Utilization ${station.utilizationPercent}%`);
+        const fill = document.createElement("span"); fill.style.width = `${Math.max(0, Math.min(100, station.utilizationPercent))}%`; bar.append(fill);
+        const utilization = document.createElement("div"); utilization.className = "station-util"; utilization.textContent = `${Number(station.utilizationPercent).toFixed(1)}%`;
+        const revenue = document.createElement("div"); revenue.className = "station-util";
+        revenue.textContent = `₹${Number(station.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        revenue.setAttribute("aria-label", `All-time station revenue ₹${Number(station.revenue || 0).toFixed(2)}`);
+        row.append(info, bar, utilization, revenue); root.append(row);
+    });
+}
+
+rangeSelect.addEventListener("change", loadAnalytics);
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderTrend(currentDaily); renderStatuses(currentStatuses); renderStationRevenue(currentStations); }, 120); });
+loadAnalytics();
+
+async function logout() {
+    await fetch(`${API_BASE_URL}/users/logout`, { method: "POST", credentials: "same-origin" }).catch(() => {});
+    sessionStorage.removeItem("smartchargeAccessToken");
+    localStorage.removeItem("smartchargeAdmin");
+    window.location.href = "login.html";
+}
 </script>
-
 <script src="admin-alerts.js"></script>
 </body>
 </html>

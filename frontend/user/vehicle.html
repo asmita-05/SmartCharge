@@ -228,6 +228,9 @@
             }
         }
     </style>
+<script src="../shared-auth.js"></script>
+    <link rel="stylesheet" href="chatbot.css">
+    <script src="chatbot.js" defer></script>
 </head>
 
 <body>
@@ -336,7 +339,7 @@
 </main>
 
 <script>
-    const API_BASE_URL = ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+    const API_BASE_URL = ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
 
     const storedUser = localStorage.getItem("smartchargeUser");
 
@@ -574,14 +577,6 @@
     }
 
     async function deleteVehicle(id) {
-
-        const confirmed = confirm(
-            "Are you sure you want to delete this vehicle?"
-        );
-
-        if (!confirmed) {
-            return;
-        }
 
         try {
             const response = await fetch(

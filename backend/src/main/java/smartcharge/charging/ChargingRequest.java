@@ -41,6 +41,9 @@ public class ChargingRequest {
     @Column 
     private Double estimatedMinutes;
 
+    @Column
+    private Double estimatedWaitMinutes;
+
     @Column(nullable = false)
     private LocalDateTime arrivalTime;
 
@@ -67,6 +70,21 @@ public class ChargingRequest {
 
     @Column
     private String adminDecision;
+
+    @Column(name = "nlp_classification", length = 30)
+    private String nlpClassification;
+
+    @Column(name = "nlp_confidence")
+    private Double nlpConfidence;
+
+    @Column(name = "nlp_model", length = 160)
+    private String nlpModel;
+
+    @Column(name = "nlp_evaluated_at")
+    private LocalDateTime nlpEvaluatedAt;
+
+    @Column(name = "emergency_decision_source", length = 30)
+    private String emergencyDecisionSource;
 
     public ChargingRequest() {
         this.arrivalTime = LocalDateTime.now();
@@ -128,6 +146,10 @@ public class ChargingRequest {
     public void setEstimatedMinutes(Double estimatedMinutes) {
         this.estimatedMinutes = estimatedMinutes;
     }
+
+    public Double getEstimatedWaitMinutes() { return estimatedWaitMinutes; }
+
+    public void setEstimatedWaitMinutes(Double estimatedWaitMinutes) { this.estimatedWaitMinutes = estimatedWaitMinutes; }
 
     public LocalDateTime getArrivalTime() {
         return arrivalTime;
@@ -192,4 +214,24 @@ public class ChargingRequest {
     public String getAdminDecision() { return adminDecision; }
 
     public void setAdminDecision(String adminDecision) { this.adminDecision = adminDecision; }
+
+    public String getNlpClassification() { return nlpClassification; }
+
+    public void setNlpClassification(String nlpClassification) { this.nlpClassification = nlpClassification; }
+
+    public Double getNlpConfidence() { return nlpConfidence; }
+
+    public void setNlpConfidence(Double nlpConfidence) { this.nlpConfidence = nlpConfidence; }
+
+    public String getNlpModel() { return nlpModel; }
+
+    public void setNlpModel(String nlpModel) { this.nlpModel = nlpModel; }
+
+    public LocalDateTime getNlpEvaluatedAt() { return nlpEvaluatedAt; }
+
+    public void setNlpEvaluatedAt(LocalDateTime nlpEvaluatedAt) { this.nlpEvaluatedAt = nlpEvaluatedAt; }
+
+    public String getEmergencyDecisionSource() { return emergencyDecisionSource; }
+
+    public void setEmergencyDecisionSource(String emergencyDecisionSource) { this.emergencyDecisionSource = emergencyDecisionSource; }
 }

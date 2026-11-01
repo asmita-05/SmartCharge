@@ -211,6 +211,132 @@
             font-size: 13px;
         }
 
+        .ev-charge-progress {
+            margin: 6px 0 18px;
+            padding: 18px;
+            border: 1px solid #cde8f4;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f0fbff, #f5f8ff);
+        }
+
+        .ev-charge-scene {
+            display: grid;
+            grid-template-columns: 52px minmax(70px, 1fr) 108px;
+            align-items: center;
+            gap: 12px;
+            max-width: 500px;
+            margin: 0 auto 12px;
+        }
+
+        .ev-charger-icon {
+            width: 52px;
+            height: 62px;
+            color: #16834a;
+        }
+
+        .ev-car-icon {
+            width: 108px;
+            height: 62px;
+            color: #2563eb;
+        }
+
+        .charge-caption {
+            margin-bottom: 8px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .charge-progress-track {
+            height: 12px;
+            overflow: hidden;
+            border-radius: 99px;
+            background: #dbe4ee;
+            box-shadow: inset 0 1px 2px rgba(15, 23, 42, .12);
+        }
+
+        .charge-progress-fill {
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #22c55e, #0ea5e9);
+            transition: none;
+            will-change: width;
+        }
+
+        .charge-progress-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 7px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .completion-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, .56);
+        }
+
+        .completion-overlay[hidden] { display: none; }
+
+        .completion-dialog {
+            width: min(100%, 420px);
+            padding: 30px;
+            border-radius: 18px;
+            background: white;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
+            text-align: center;
+            animation: completion-pop .24s ease-out;
+        }
+
+        .completion-mark {
+            display: grid;
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 16px;
+            place-items: center;
+            border-radius: 50%;
+            background: #dcfce7;
+            color: #16834a;
+            font-size: 34px;
+        }
+
+        .completion-dialog h2 { margin-bottom: 8px; color: #0f172a; }
+        .completion-dialog p { margin-bottom: 20px; color: #64748b; line-height: 1.5; }
+        .completion-dialog button {
+            border: 0;
+            border-radius: 8px;
+            padding: 11px 20px;
+            background: #16834a;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        @keyframes completion-pop {
+            from { transform: translateY(8px) scale(.97); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .completion-dialog { animation: none; }
+        }
+
+        @media (max-width: 420px) {
+            .ev-charge-progress { padding: 14px 10px; }
+            .ev-charge-scene { grid-template-columns: 42px minmax(45px, 1fr) 88px; gap: 8px; }
+            .ev-charger-icon { width: 42px; }
+            .ev-car-icon { width: 88px; }
+        }
+
         .actions {
             margin-top: 18px;
             display: flex;
@@ -287,6 +413,9 @@
             }
         }
     </style>
+<script src="../shared-auth.js"></script>
+    <link rel="stylesheet" href="chatbot.css">
+    <script src="chatbot.js" defer></script>
 </head>
 
 <body>
@@ -318,8 +447,17 @@
 
 </main>
 
+<div id="completionOverlay" class="completion-overlay" role="presentation" hidden>
+    <section class="completion-dialog" role="dialog" aria-modal="true" aria-labelledby="completionTitle" aria-describedby="completionText">
+        <div class="completion-mark" aria-hidden="true">✓</div>
+        <h2 id="completionTitle">Charge completed!</h2>
+        <p id="completionText">Your charging session is complete. You can view the final session details below.</p>
+        <button type="button" onclick="closeCompletionPopup()">Got it</button>
+    </section>
+</div>
+
 <script>
-    const API_BASE_URL = ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+    const API_BASE_URL = ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
     const focusedRequestId = new URLSearchParams(window.location.search).get("requestId");
     if (focusedRequestId) {
         localStorage.setItem("smartchargeFocusedRequestId", focusedRequestId);
@@ -352,13 +490,28 @@
 
     let vehicles = [];
     let sessions = [];
+    let bookingPayments = {};
+    let isLoadingData = false;
+    let previousSessionStates = new Map();
+    let requestsAwaitingAllocation = false;
 
     loadData();
+    window.setInterval(() => {
+        if (!isLoadingData && (requestsAwaitingAllocation
+            || sessions.some(session => String(session.status).toUpperCase() === "ACTIVE"))) {
+            loadData(true);
+        }
+    }, 5000);
 
-    async function loadData() {
+    async function loadData(silent = false) {
 
-        requestList.innerHTML =
-            '<div class="loading">Loading charging requests...</div>';
+        if (isLoadingData) return;
+        isLoadingData = true;
+
+        if (!silent) {
+            requestList.innerHTML =
+                '<div class="loading">Loading charging requests...</div>';
+        }
 
         try {
 
@@ -396,11 +549,26 @@
             const requests =
                 await requestsResponse.json();
 
+            requestsAwaitingAllocation = requests.some(request =>
+                ["PENDING", "ALLOCATED"].includes(String(request.status || "").toUpperCase())
+            );
+
             vehicles =
                 await vehiclesResponse.json();
 
             sessions =
                 await sessionsResponse.json();
+
+            notifyCompletedSessions(sessions);
+
+            const checkoutRequests = requests.filter(request =>
+                String(request.id) === String(focusedRequestId)
+                || String(request.status).toUpperCase() === "PAYMENT_PENDING");
+            const checkoutResults = await Promise.all(checkoutRequests.map(async request => {
+                const response = await fetch(`${API_BASE_URL}/payments/booking/${request.id}`);
+                return response.ok ? [String(request.id), await response.json()] : null;
+            }));
+            bookingPayments = Object.fromEntries(checkoutResults.filter(Boolean));
 
 
             const visibleRequests = focusedRequestId
@@ -421,9 +589,53 @@
                 "Unable to connect to the server.",
                 "error"
             );
+        } finally {
+            isLoadingData = false;
         }
     }
 
+    function notifyCompletedSessions(latestSessions) {
+        latestSessions.forEach(session => {
+            const id = String(session.id);
+            const currentStatus = String(session.status || "").toUpperCase();
+            const previousStatus = previousSessionStates.get(id);
+            const requestId = String(session.request?.id || "");
+            const storageKey = `smartcharge-active-session-${user.id}-${id}`;
+            const wasActive = previousStatus === "ACTIVE"
+                || localStorage.getItem(storageKey) === "1";
+
+            if (currentStatus === "ACTIVE") {
+                localStorage.setItem(storageKey, "1");
+            } else if (currentStatus === "COMPLETED") {
+                const launchedForThisRequest = focusedRequestId
+                    && requestId === String(focusedRequestId);
+                const shownKey = `smartcharge-completion-shown-${user.id}-${id}`;
+                if ((wasActive || launchedForThisRequest) && !localStorage.getItem(shownKey)) {
+                    localStorage.setItem(shownKey, "1");
+                    showCompletionPopup(requestId);
+                }
+                localStorage.removeItem(storageKey);
+            } else {
+                localStorage.removeItem(storageKey);
+            }
+
+            previousSessionStates.set(id, currentStatus);
+        });
+    }
+
+    function showCompletionPopup(requestId) {
+        const overlay = document.getElementById("completionOverlay");
+        const text = document.getElementById("completionText");
+        text.textContent = requestId
+            ? `Charging request #${requestId} is complete. You can view the final session details below.`
+            : "Your charging session is complete. You can view the final session details below.";
+        overlay.hidden = false;
+        overlay.querySelector("button").focus();
+    }
+
+    function closeCompletionPopup() {
+        document.getElementById("completionOverlay").hidden = true;
+    }
 
     function renderRequests(requests) {
 
@@ -531,9 +743,15 @@
 
 
             let sessionHtml = "";
+            let paymentHtml = "";
 
 
             if (session) {
+
+                const sessionStatus = String(session.status || "UNKNOWN").toUpperCase();
+                const chargingProgressHtml = sessionStatus === "ACTIVE"
+                    ? renderChargingProgress(session, request.estimatedMinutes)
+                    : "";
 
                 sessionHtml = `
                     <div class="session">
@@ -596,12 +814,44 @@
 
                         </div>
 
-                        ${String(session.status).toUpperCase() === "ACTIVE"
+                        ${chargingProgressHtml}
+
+                        ${sessionStatus === "ACTIVE"
                             ? `<p class="session-auto-complete">Charging completes automatically at the estimated finish time.</p>`
                             : ""}
 
                     </div>
                 `;
+
+            }
+
+            const checkout = bookingPayments[String(request.id)];
+            const requestEnergy = checkout?.energyKwh ?? (vehicle?.batteryCapacity
+                ? Number(vehicle.batteryCapacity) * (Number(request.targetBattery) - Number(request.currentBattery)) / 100 : null);
+            if (checkout?.paymentStatus === "AWAITING_PAYMENT") {
+                const waitText = checkout.waitMinutes == null ? "Unavailable from current charger data"
+                    : checkout.waitMinutes <= 0 ? "0 min — charger is currently free; allocation follows payment and scheduler processing"
+                    : `${Math.ceil(checkout.waitMinutes)} min estimated queue wait`;
+                paymentHtml = `<div class="session" style="border-color:#a7d9c2;background:#f2fbf6">
+                    <h3>💳 Pay in advance to confirm booking</h3>
+                    <p style="margin:8px 0">Estimated energy: <strong>${Number(requestEnergy || 0).toFixed(2)} kWh</strong> · Charging time: <strong>${checkout.chargingMinutes == null ? "Unavailable" : `${Math.ceil(checkout.chargingMinutes)} min`}</strong></p>
+                    <p style="margin:8px 0">Estimated wait: <strong>${escapeHtml(waitText)}</strong></p>
+                    <p style="margin:8px 0">Bill: ${Number(requestEnergy || 0).toFixed(2)} kWh × ₹${Number(checkout.ratePerKwh).toFixed(2)}/kWh = <strong>₹${Number(checkout.amount).toFixed(2)}</strong></p>
+                    <label for="booking-method-${request.id}">Demo payment method</label>
+                    <select id="booking-method-${request.id}" style="padding:9px;margin:8px;border-radius:8px"><option value="UPI">UPI</option><option value="CARD">Card</option><option value="WALLET">Wallet</option></select>
+                    <div class="actions"><button class="cancel-btn" style="background:#16834a" onclick="submitBookingPayment(${request.id}, 'SUCCESS')">Simulate successful payment</button>
+                    <button class="cancel-btn" style="background:#b42318" onclick="submitBookingPayment(${request.id}, 'FAILURE')">Simulate failed payment</button></div>
+                    <p style="margin-top:8px;color:#64748b">Demo only. A failed payment cancels this unallocated booking, and you will need to book again.</p>
+                </div>`;
+            } else if (checkout?.paymentStatus === "PAID") {
+                const nextStep = request.status === "ALLOCATED"
+                    ? "Payment received. The free charger was assigned to this emergency booking immediately."
+                    : request.emergencyRequested
+                        ? "Payment received. The charger is occupied, so this emergency booking is waiting for Admin priority review."
+                        : "Payment received. The booking is now eligible for the scheduler.";
+                paymentHtml = `<div class="session" style="border-color:#a7d9c2;background:#f2fbf6"><h3>✅ Paid in advance</h3><p>₹${Number(checkout.amount).toFixed(2)} via ${escapeHtml(checkout.paymentMethod || "demo payment")}. Reference: <strong>${escapeHtml(checkout.paymentReference || "—")}</strong></p><p>${nextStep}</p></div>`;
+            } else if (checkout?.paymentStatus === "FAILED") {
+                paymentHtml = `<div class="session" style="border-color:#fecaca;background:#fff7f7"><h3>Payment failed — booking cancelled</h3><p>No charger was allocated and no charging session was created. Please make a new booking to try again.</p><a class="cancel-btn" style="display:inline-block;background:#16834a;text-decoration:none;margin-top:8px" href="booking.html">Book another charger</a></div>`;
             }
 
 
@@ -693,6 +943,11 @@
                         </div>
                     </div>
 
+                    <div class="detail">
+                        <div class="detail-label">Estimated Queue Wait</div>
+                        <div class="detail-value">${request.estimatedWaitMinutes == null ? "Unavailable" : `${Math.ceil(request.estimatedWaitMinutes)} min`}</div>
+                    </div>
+
 
                     <div class="detail">
                         <div class="detail-label">
@@ -722,6 +977,8 @@
 
                 ${emergencyHtml}
 
+                ${paymentHtml}
+
                 ${sessionHtml}
 
                 ${actionHtml}
@@ -729,22 +986,116 @@
 
 
             requestList.appendChild(card);
+
+            if (session && String(session.status).toUpperCase() === "ACTIVE") {
+                animateChargingProgress(card.querySelector(".ev-charge-progress"));
+            }
         });
+    }
+
+    function animateChargingProgress(progressContainer) {
+        if (!progressContainer) return;
+
+        const startMs = Number(progressContainer.dataset.startMs);
+        const durationMs = Number(progressContainer.dataset.durationMs);
+        const track = progressContainer.querySelector('[role="progressbar"]');
+        const fill = progressContainer.querySelector(".charge-progress-fill");
+        const percentLabel = progressContainer.querySelector(".charge-progress-percent");
+        const remainingLabel = progressContainer.querySelector(".charge-progress-remaining");
+        if (!Number.isFinite(startMs) || !Number.isFinite(durationMs) || durationMs <= 0) return;
+
+        let lastDisplayedPercent = -1;
+        let lastRemainingMinutes = -1;
+        const update = () => {
+            if (!progressContainer.isConnected) return;
+
+            const now = Date.now();
+            const percent = Math.min(99, Math.max(0, ((now - startMs) / durationMs) * 100));
+            fill.style.width = `${percent.toFixed(2)}%`;
+            const wholePercent = Math.floor(percent);
+            if (wholePercent !== lastDisplayedPercent) {
+                track.setAttribute("aria-valuenow", String(wholePercent));
+                percentLabel.textContent = `${wholePercent}% estimated`;
+                lastDisplayedPercent = wholePercent;
+            }
+
+            const remainingMinutes = Math.max(0, Math.ceil((startMs + durationMs - now) / 60_000));
+            if (remainingMinutes !== lastRemainingMinutes) {
+                remainingLabel.textContent = remainingMinutes === 0
+                    ? "Finishing up"
+                    : `${remainingMinutes} min remaining`;
+                lastRemainingMinutes = remainingMinutes;
+            }
+
+            window.requestAnimationFrame(update);
+        };
+
+        window.requestAnimationFrame(update);
+    }
+
+    function renderChargingProgress(session, estimatedMinutes) {
+        const durationMs = Number(estimatedMinutes) * 60_000;
+        const startMs = Date.parse(session.startTime);
+        let progress = 0;
+        if (Number.isFinite(startMs) && durationMs > 0) {
+            progress = Math.min(99, Math.max(0, ((Date.now() - startMs) / durationMs) * 100));
+        }
+        const remainingMinutes = durationMs > 0 && Number.isFinite(startMs)
+            ? Math.max(0, Math.ceil((startMs + durationMs - Date.now()) / 60_000))
+            : null;
+        const progressLabel = remainingMinutes == null
+            ? "Charging in progress"
+            : remainingMinutes === 0
+                ? "Finishing up"
+                : `${remainingMinutes} min remaining`;
+
+        return `<div class="ev-charge-progress" data-start-ms="${Number.isFinite(startMs) ? startMs : ""}" data-duration-ms="${durationMs > 0 ? durationMs : ""}">
+            <div class="ev-charge-scene">
+                <svg class="ev-charger-icon" viewBox="0 0 64 76" fill="none" aria-hidden="true">
+                    <rect x="9" y="5" width="38" height="61" rx="8" fill="currentColor" opacity=".12" stroke="currentColor" stroke-width="3"/>
+                    <rect x="16" y="13" width="24" height="18" rx="3" fill="white" stroke="currentColor" stroke-width="2"/>
+                    <path d="M29 15l-6 9h5l-2 6 8-10h-5l2-5z" fill="#f59e0b"/>
+                    <path d="M47 20h5v18a7 7 0 0 0 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M18 67h21" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <div class="charge-progress-track" role="progressbar" aria-label="Estimated charging progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(progress)}">
+                    <div class="charge-progress-fill" style="width:${progress.toFixed(2)}%"></div>
+                </div>
+                <svg class="ev-car-icon" viewBox="0 0 132 76" fill="none" aria-hidden="true">
+                    <path d="M18 48l8-22a10 10 0 0 1 9-6h43a12 12 0 0 1 9 4l17 19 13 5a7 7 0 0 1 5 7v8H11v-8a7 7 0 0 1 7-7z" fill="currentColor" opacity=".12" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                    <path d="M32 24h23v18H25l7-18zm28 0h17a8 8 0 0 1 6 3l13 15H60V24z" fill="white" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="32" cy="62" r="8" fill="#1e293b"/><circle cx="32" cy="62" r="3" fill="white"/>
+                    <circle cx="101" cy="62" r="8" fill="#1e293b"/><circle cx="101" cy="62" r="3" fill="white"/>
+                    <path d="M48 51h23" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="charge-caption">Charging your vehicle</div>
+            <div class="charge-progress-meta"><span class="charge-progress-percent">${Math.round(progress)}% estimated</span><span class="charge-progress-remaining">${progressLabel}</span></div>
+        </div>`;
+    }
+
+
+    async function submitBookingPayment(requestId, outcome) {
+        const method = document.getElementById(`booking-method-${requestId}`)?.value || "UPI";
+        try {
+            const response = await fetch(`${API_BASE_URL}/payments/booking/${requestId}/attempt`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ method, outcome })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.message || result.error || "Unable to record demo payment.");
+            showMessage(outcome === "SUCCESS"
+                ? "Advance payment successful. Booking is now eligible for scheduling."
+                : "Payment failed. Booking cancelled; no charger or session was allocated.", outcome === "SUCCESS" ? "success" : "error");
+            await loadData();
+        } catch (error) {
+            showMessage(error.message || "Unable to process demo payment.", "error");
+        }
     }
 
 
     async function cancelRequest(requestId) {
-
-        const confirmed =
-            confirm(
-                "Are you sure you want to cancel this charging request?"
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
 
         try {
 

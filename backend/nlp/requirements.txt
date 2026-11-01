@@ -1,0 +1,4 @@
+transformers[sentencepiece]>=4.44,<5
+fastapi>=0.110,<1
+uvicorn[standard]>=0.27,<1
+huggingface_hub>=0.24,<2

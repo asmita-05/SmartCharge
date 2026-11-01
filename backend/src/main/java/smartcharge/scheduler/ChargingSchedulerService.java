@@ -8,6 +8,7 @@ import smartcharge.charging.ChargingSession;
 import smartcharge.charging.ChargingSessionRepository;
 import smartcharge.station.Charger;
 import smartcharge.station.ChargerRepository;
+import smartcharge.payment.BookingPaymentRepository;
 
 import java.util.Comparator;
 import java.util.List;
@@ -22,24 +23,27 @@ public class ChargingSchedulerService {
     private final ChargingSessionRepository sessionRepository;
     private final ChargerRepository chargerRepository;
     private final SchedulerService schedulerService;
+    private final BookingPaymentRepository bookingPaymentRepository;
 
     public ChargingSchedulerService(
             ChargingRequestRepository requestRepository,
             ChargingSessionRepository sessionRepository,
             ChargerRepository chargerRepository,
-            SchedulerService schedulerService) {
+            SchedulerService schedulerService,
+            BookingPaymentRepository bookingPaymentRepository) {
 
         this.requestRepository = requestRepository;
         this.sessionRepository = sessionRepository;
         this.chargerRepository = chargerRepository;
         this.schedulerService = schedulerService;
+        this.bookingPaymentRepository = bookingPaymentRepository;
     }
 
     @Transactional
     public Optional<ChargingSession> processNextRequest() {
 
         List<ChargingRequest> pendingRequests =
-                requestRepository.findByStatus("PENDING").stream()
+                requestRepository.findByStatusOrderByIdAsc("PENDING").stream()
                         .filter(this::isSchedulerEligible)
                         .toList();
 
@@ -124,6 +128,7 @@ public class ChargingSchedulerService {
         ChargingRequest priorityRequest = requestRepository.findByIdForUpdate(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Charging request not found"));
         if (!"PENDING".equalsIgnoreCase(priorityRequest.getStatus())
+                || !hasAdvancePayment(priorityRequest.getId())
                 || !"APPROVED".equalsIgnoreCase(priorityRequest.getEmergencyStatus())) {
             return Optional.empty();
         }
@@ -154,11 +159,38 @@ public class ChargingSchedulerService {
         return Optional.empty();
     }
 
+    /** Allocate a paid, approved priority request immediately when its selected charger is free. */
+    @Transactional
+    public Optional<ChargingSession> processEmergencyIfChargerAvailable(Long requestId) {
+        ChargingRequest request = requestRepository.findByIdForUpdate(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Charging request not found"));
+        if (!"PENDING".equalsIgnoreCase(request.getStatus())
+                || !Boolean.TRUE.equals(request.getEmergencyRequested())
+                || !"APPROVED".equalsIgnoreCase(request.getEmergencyStatus())
+                || !hasAdvancePayment(requestId)) {
+            return Optional.empty();
+        }
+
+        Optional<Charger> charger = findAndLockCompatibleCharger(request);
+        if (charger.isEmpty() || !"AVAILABLE".equalsIgnoreCase(charger.get().getStatus())) {
+            return Optional.empty();
+        }
+
+        return Optional.of(allocate(request, charger.get()));
+    }
+
     private boolean isSchedulerEligible(ChargingRequest request) {
+        if (!hasAdvancePayment(request.getId())) return false;
         if (!Boolean.TRUE.equals(request.getEmergencyRequested())) return true;
         String emergencyStatus = request.getEmergencyStatus();
         return "APPROVED".equalsIgnoreCase(emergencyStatus)
                 || "DECLINED".equalsIgnoreCase(emergencyStatus);
+    }
+
+    private boolean hasAdvancePayment(Long requestId) {
+        return bookingPaymentRepository.findByRequestId(requestId)
+                .map(payment -> "PAID".equalsIgnoreCase(payment.getStatus()))
+                .orElse(false);
     }
 
     private boolean isPriority(ChargingRequest request) {
@@ -234,12 +266,29 @@ public class ChargingSchedulerService {
         String connectorType =
                 request.getRequiredConnectorType();
 
+        Long stationId = request.getStation() == null
+                ? null
+                : request.getStation().getId();
+
         if (connectorType == null
                 || connectorType.isBlank()) {
+
+            if (stationId != null) {
+                return chargerRepository.findFirstByStationIdAndStatusOrderByIdAsc(
+                        stationId,
+                        "AVAILABLE");
+            }
 
             return chargerRepository
                     .findFirstByStatusOrderByIdAsc(
                             "AVAILABLE");
+        }
+
+        if (stationId != null) {
+            return chargerRepository.findFirstByStationIdAndStatusAndConnectorTypeIgnoreCaseOrderByIdAsc(
+                    stationId,
+                    "AVAILABLE",
+                    connectorType);
         }
 
         return chargerRepository

@@ -175,6 +175,9 @@
             color: #b91c1c;
         }
 
+        .approved-badge { background: #dcfce7; color: #166534; }
+        .declined-badge { background: #e2e8f0; color: #334155; }
+
         .details {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -285,6 +288,7 @@
             }
         }
     </style>
+<script src="../shared-auth.js"></script>
 </head>
 
 <body>
@@ -335,7 +339,7 @@
             </h1>
 
             <p>
-                Review emergency charging requests submitted by users.
+                Review the NLP decision for every emergency request. Admins can override either decision while the request is active. Model scores are not calibrated probabilities.
             </p>
         </div>
 
@@ -366,7 +370,7 @@
 <script>
 
     const API_BASE_URL =
-        ((location.protocol === "file:") ? "http://localhost:8080/api" : "/api");
+        ((location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:8080/api" : "/api");
 
     const focusedEmergencyId = new URLSearchParams(window.location.search).get("requestId");
 
@@ -409,7 +413,7 @@
 
             const response =
                 await fetch(
-                    `${API_BASE_URL}/admin/emergencies/pending`
+                    `${API_BASE_URL}/admin/emergencies/all`
                 );
 
 
@@ -471,9 +475,9 @@
 
             container.innerHTML = `
                 <div class="empty">
-                    <h3>No Pending Emergencies</h3>
+                    <h3>No Emergency Requests</h3>
                     <p style="margin-top: 8px;">
-                        There are currently no emergency requests waiting for review.
+                        Emergency requests and NLP decisions will appear here.
                     </p>
                 </div>
             `;
@@ -530,6 +534,17 @@
                 request.emergencyReason ||
                 "No reason provided.";
 
+            const emergencyStatus = String(request.emergencyStatus || "PENDING").toUpperCase();
+            const decisionSource = String(request.emergencyDecisionSource || "LEGACY").toUpperCase();
+            const badgeClass = emergencyStatus === "APPROVED" ? "approved-badge"
+                : emergencyStatus === "DECLINED" ? "declined-badge" : "pending";
+            const nlpClass = String(request.nlpClassification || "NOT CLASSIFIED").toUpperCase();
+            const nlpScore = request.nlpConfidence == null
+                ? "Not available"
+                : `${(Number(request.nlpConfidence) * 100).toFixed(1)}% model score`;
+            const terminalRequest = ["COMPLETED", "CANCELLED"].includes(String(request.status || "").toUpperCase());
+            const canOverride = !terminalRequest;
+
 
             card.innerHTML = `
 
@@ -539,8 +554,8 @@
                         Request #${escapeHtml(request.id)}
                     </div>
 
-                    <span class="badge pending">
-                        PENDING REVIEW
+                    <span class="badge ${badgeClass}">
+                        ${escapeHtml(emergencyStatus)} · ${escapeHtml(decisionSource)}
                     </span>
 
                 </div>
@@ -650,12 +665,22 @@
 
                         <div class="detail-value">
                             ${escapeHtml(
-                                String(
-                                    request.emergencyStatus || "PENDING"
-                                ).toUpperCase()
+                                emergencyStatus
                             )}
                         </div>
 
+                    </div>
+
+
+                    <div class="detail">
+                        <div class="detail-label">NLP Classification</div>
+                        <div class="detail-value">${escapeHtml(nlpClass)} · ${escapeHtml(nlpScore)}</div>
+                    </div>
+
+
+                    <div class="detail">
+                        <div class="detail-label">Decision Source / Model</div>
+                        <div class="detail-value">${escapeHtml(decisionSource)}${request.nlpModel ? ` · ${escapeHtml(request.nlpModel)}` : ""}</div>
                     </div>
 
 
@@ -695,16 +720,18 @@
 
                     <button
                         class="approve-btn"
+                        ${canOverride ? "" : "disabled"}
                         onclick="approveEmergency(${request.id})"
                     >
-                        Approve Emergency
+                        ${emergencyStatus === "APPROVED" ? "Keep / Set Approved" : "Override: Approve Emergency"}
                     </button>
 
                     <button
                         class="decline-btn"
+                        ${canOverride ? "" : "disabled"}
                         onclick="declineEmergency(${request.id})"
                     >
-                        Decline Emergency
+                        ${emergencyStatus === "DECLINED" ? "Keep / Set Declined" : "Override: Decline Priority"}
                     </button>
 
                 </div>
@@ -725,17 +752,6 @@
         requestId
     ) {
 
-        const confirmed =
-            confirm(
-                `Approve emergency request #${requestId}?`
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
-
         await updateEmergency(
             requestId,
             "approve"
@@ -746,17 +762,6 @@
     async function declineEmergency(
         requestId
     ) {
-
-        const confirmed =
-            confirm(
-                `Decline emergency request #${requestId}?`
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
 
         await updateEmergency(
             requestId,
@@ -892,7 +897,9 @@
     }
 
 
-    function logout() {
+    async function logout() {
+        await fetch(`${API_BASE_URL}/users/logout`, { method: "POST" }).catch(() => {});
+        sessionStorage.removeItem("smartchargeAccessToken");
 
         localStorage.removeItem(
             "smartchargeAdmin"

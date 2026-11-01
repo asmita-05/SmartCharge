@@ -8,7 +8,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/scheduler")
-@CrossOrigin("*")
 public class SchedulerController {
 
     private final SchedulerService schedulerService;
