@@ -1,41 +1,187 @@
 # SmartCharge
 
-SmartCharge is a web application for managing EV charging stations and scheduling charging requests. It demonstrates how limited chargers can be allocated to competing requests, with separate workflows for drivers, station operators, and administrators.
+**SmartCharge** is an academic web application for managing EV charging stations and scheduling charging requests. It demonstrates how a system can allocate a limited number of chargers, handle competing requests, and give drivers, station operators, and administrators different tools.
+
+The application includes a browser-based frontend, a Java/Spring Boot backend, a PostgreSQL database, and an optional local Python service that classifies emergency requests. It is designed to run locally. A GitHub repository contains the source code; it does not host the running application or its database.
 
 ## Features
 
-- Driver registration and login, vehicle management, and charging requests with current and target battery levels.
-- Public driver signup with database-backed accounts, BCrypt password hashing, and signed, short-lived login tokens. Each browser tab keeps its own role/account login. Public signup cannot create operator or administrator accounts.
-- Charger and connector selection, request status and charging history, estimated charging duration, and simulated charging sessions.
-- Simulated advance payment for charging bookings at a demo rate of ₹8.50/kWh. Drivers see estimated energy, charging duration, queue wait and amount before choosing a simulated success or failure. A failure cancels the still-unallocated booking; success makes it eligible for scheduling. Each attempt is saved in the user's payment history. No real payment provider or payment credentials are used.
-- FCFS (First Come, First Served), SJF (Shortest Job First), and Priority scheduling. An administrator can change the active scheduling algorithm.
-- Pre-trained, local zero-shot NLP classification of emergency reasons. Serious predictions are automatically approved, routine predictions are declined, and NLP service failures remain pending for admin review. Admins can override either model decision from the emergency dashboard.
-- Station and charger management for operators, including operational status updates.
-- Admin analytics for charging performance and all-time revenue by station from successful payment records.
-- Station wait estimates and route lookup from a driver's location. Routes use OpenRouteService when configured and fall back to the public OSRM table service if ORS is unreachable.
-- Guided SmartCharge Help chatbot with menu-based FAQs, safe troubleshooting guidance, and authenticated lookup of the signed-in user's latest request. It runs without an external LLM or chatbot API.
+- Driver registration and login, vehicle management, charging requests, and request/session history.
+- Charger and connector selection, estimated charging duration, and queue wait estimates.
+- FCFS (First Come, First Served), SJF (Shortest Job First), and Priority scheduling. Administrators can choose the active scheduling algorithm.
+- Station and charger management for station operators.
+- Administrator dashboards for requests, emergencies, scheduling, and charging analytics.
+- Optional route lookup using OpenRouteService, with a public OSRM fallback when ORS is unavailable.
+- A guided SmartCharge Help chatbot with prepared FAQs, troubleshooting guidance, and authenticated lookup of the signed-in driver's latest request.
+- Optional email OTP verification for new driver accounts using Brevo.
+- A local zero-shot NLP classifier for emergency reasons. If the NLP service is unavailable, an emergency request remains pending for administrator review.
 - PostgreSQL persistence through Spring Data JPA and Hibernate.
 
-The app simulates charging-session progress and completion; it does not connect to physical chargers or a payment processor. Advance payment is a demonstration only: drivers can simulate success or failure before a booking enters the scheduler. Failed attempts are kept in `booking_payment_attempts`; successful/current booking payment state is stored in `booking_payments`. Failed bookings remain as cancelled request records for audit/history, with no charger allocation or session. Older post-session demo payment records remain in `payments` and `payment_attempts`. The guided chatbot uses prepared help content and menu selections; it does not accept arbitrary chat text or call an external AI model.
+Charging sessions are simulated; the application does not control physical chargers. Booking payments are simulated and do not process real money. The guided chatbot uses prepared content and does not call an external AI service.
 
-Passwords for existing accounts are upgraded from legacy plaintext storage to BCrypt hashes at startup. The demo credentials below are only for local demonstrations; replace them and configure HTTPS before exposing the application beyond a trusted local environment.
+## Project components
 
-`start-backend.bat` reads the signing key from the ignored `.jwt-secret` file. A random key has been generated for this checkout so tokens remain valid across local backend restarts. For another deployment, configure `SMARTCHARGE_JWT_SECRET` with a private value of at least 32 UTF-8 bytes, and keep it stable across application instances. If the key changes, users must sign in again.
+| Component | Technology | Purpose |
+| --- | --- | --- |
+| Frontend | HTML, CSS, browser JavaScript | Driver, operator, and administrator pages |
+| Backend | Java 25, Spring Boot, Spring Web, Spring Security, Spring Data JPA | API, authentication, scheduling, allocation, and application logic |
+| Database | PostgreSQL | Users, vehicles, stations, chargers, requests, sessions, and payment records |
+| Emergency classification | Python 3.11, FastAPI, Transformers, CPU-only PyTorch | Local classification of emergency reasons |
+| Build | Apache Maven | Build and run the backend |
 
-## Configure email OTP signup with Brevo
+## Requirements
 
-New public signups remain pending until the email address is verified with a six-digit OTP. Codes expire after 10 minutes, allow up to five verification attempts, and can be resent after a cooldown. To enable delivery:
+For the complete local experience, install:
 
-1. Create a Brevo API key and register/verify a sender address in Brevo. Brevo requires a registered sender for transactional mail; domain authentication is recommended for reliable delivery.
-2. Put the API key by itself in the ignored `.brevo-key` file at the project root.
-3. Put the verified sender email address by itself in the ignored `.brevo-sender` file.
-4. Start the project with `start-backend.bat`. These files are ignored by Git. Alternatively set `BREVO_API_KEY` and `BREVO_SENDER_EMAIL` in the backend environment.
+1. **Git** to clone the repository.
+2. **JDK 25** and ensure `java` is on your `PATH` (`java -version`).
+3. **Apache Maven** and ensure `mvn` is on your `PATH` (`mvn -version`). This repository does not include the Maven wrapper.
+4. **Docker Desktop** (or another Docker Engine) to run PostgreSQL, or an existing PostgreSQL database.
+5. **64-bit Python 3.11** for the local emergency classification service.
 
-The API key stays on the backend and is sent to Brevo's transactional email endpoint. The app stores only a hash of each OTP and deletes expired pending signups during periodic cleanup. Brevo sender setup and API usage are documented in its [transactional email guide](https://developers.brevo.com/docs/send-a-transactional-email).
+The Windows startup helper is `start-backend.bat`. The backend can also be started with Maven on macOS and Linux. The NLP setup scripts provided in this repository are for Windows; instructions for running its service manually on macOS/Linux are included below.
 
-## Roles and demo accounts
+## 1. Get the project
 
-On first startup, the backend creates sample accounts, a vehicle, a station, and a charger if they do not already exist:
+Clone the repository and enter the project directory:
+
+```bash
+git clone https://github.com/asmita-05/SmartCharge.git
+cd SmartCharge
+```
+
+You can also use **Code → Download ZIP** on GitHub, then extract the archive. GitHub provides the source files; each person running the application needs their own local database and configuration.
+
+## 2. Start PostgreSQL
+
+The application expects PostgreSQL at `localhost:5432` and a database named `smartcharge` by default. The following command starts a local PostgreSQL 16 container with persistent Docker storage:
+
+```powershell
+docker run --name smartcharge-postgres `
+  -e POSTGRES_DB=smartcharge `
+  -e POSTGRES_USER=postgres `
+  -e POSTGRES_PASSWORD=choose-a-local-password `
+  -p 5432:5432 `
+  -v smartcharge-postgres-data:/var/lib/postgresql/data `
+  -d postgres:16
+```
+
+Replace `choose-a-local-password` with a password you choose for your local database. Keep it private. If the container already exists, start it instead of creating it again:
+
+```powershell
+docker start smartcharge-postgres
+```
+
+Check that it is running:
+
+```powershell
+docker ps
+```
+
+The named Docker volume keeps the database data when the container stops. The application creates and updates its tables at startup with Hibernate (`spring.jpa.hibernate.ddl-auto=update`). `database/schema.sql` is a reference schema; Spring Boot does not automatically execute it.
+
+If PostgreSQL is already installed on your computer, you can use that instead. Create a database named `smartcharge` and use the matching database username and password in the environment variables below. If you map the container to a different host port, update `spring.datasource.url` in `backend/src/main/resources/application.properties` accordingly.
+
+## 3. Configure local environment variables
+
+The committed `application.properties` uses environment variables for sensitive settings. Configure them in the terminal where you will start the backend. Do not commit real passwords, API keys, or signing secrets.
+
+In PowerShell, set the database credentials. Use the same password you provided to Docker:
+
+```powershell
+$env:DB_USERNAME = "postgres"
+$env:DB_PASSWORD = "choose-a-local-password"
+```
+
+Create a random JWT signing secret for this terminal session:
+
+```powershell
+$bytes = New-Object byte[] 48
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$env:SMARTCHARGE_JWT_SECRET = [Convert]::ToBase64String($bytes)
+$rng.Dispose()
+```
+
+`SMARTCHARGE_JWT_SECRET` should be at least 32 UTF-8 bytes and should stay stable while the same local app is running. If it changes, users may need to sign in again. For longer-term local use, configure the variables in your operating system's environment-variable settings rather than generating a new JWT secret every time.
+
+Optional integrations:
+
+- Set `ORS_API_KEY` to enable OpenRouteService routing. Without it, the backend starts but ORS routing is unavailable; the route service may use its public OSRM fallback.
+- Set `BREVO_API_KEY` and `BREVO_SENDER_EMAIL` to deliver OTP emails through a verified Brevo sender. Without these, email verification cannot deliver signup codes.
+
+These are environment variables, not a `.env` file: Spring Boot does not automatically load a `.env` file in this project.
+
+## 4. Set up the emergency NLP service
+
+The emergency classifier uses the pinned `MoritzLaurer/deberta-v3-base-zeroshot-v1.1-all-33` model. Its weights are downloaded locally and are not stored in GitHub. The initial setup needs internet access and several hundred megabytes of disk space.
+
+### Windows
+
+From the project root, run:
+
+```powershell
+Set-Location .\backend\nlp
+powershell -ExecutionPolicy Bypass -File .\setup-nlp.ps1
+powershell -ExecutionPolicy Bypass -File .\download-model.ps1
+Set-Location ..\..
+```
+
+The scripts create `backend/nlp/.venv`, install CPU-only PyTorch and the Python dependencies, and download the pinned model snapshot to `backend/nlp/model/`. These generated folders are ignored by Git.
+
+### macOS/Linux
+
+The included setup/download helpers are PowerShell scripts. To set up the NLP service manually, use Python 3.11 and run from the project root:
+
+```bash
+cd backend/nlp
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install torch
+python -m pip install -r requirements.txt
+python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='MoritzLaurer/deberta-v3-base-zeroshot-v1.1-all-33', revision='2a8a9dd6777d61f3b6331fca71436bf8f75b50d6', local_dir='model', allow_patterns=['config.json','model.safetensors','added_tokens.json','special_tokens_map.json','spm.model','tokenizer.json','tokenizer_config.json'])"
+```
+
+Keep the virtual environment active and start the service in its own terminal:
+
+```bash
+python emergency_classifier.py
+```
+
+The local NLP service listens on `127.0.0.1:8090`. If it is not running, the backend can still run, but emergency requests will remain pending for administrator review until they can be classified.
+
+## 5. Run SmartCharge
+
+### Windows
+
+Make sure PostgreSQL is running and the environment variables from step 3 are set in the current PowerShell session. From the project root, run:
+
+```powershell
+.\start-backend.bat
+```
+
+Set up the NLP environment and model in step 4 before using this helper. The script checks PostgreSQL and port `8080`, starts the NLP service in a separate window if it is not already running, then starts Spring Boot. Keep the backend and NLP windows open while using the application. The browser should open at [http://localhost:8080/](http://localhost:8080/).
+
+### macOS/Linux
+
+Start PostgreSQL and the NLP service first. In another terminal, set the required variables and run Maven from `backend`:
+
+```bash
+export DB_USERNAME=postgres
+export DB_PASSWORD='choose-a-local-password'
+export SMARTCHARGE_JWT_SECRET='replace-with-a-random-secret-at-least-32-bytes-long'
+cd backend
+mvn spring-boot:run
+```
+
+When startup completes, open [http://localhost:8080/](http://localhost:8080/) in a browser. Keep both services running while using the app. Press `Ctrl+C` in the backend terminal to stop Spring Boot.
+
+The frontend is served by Spring Boot. Do not open the HTML files directly from the filesystem; the pages call the backend at `http://localhost:8080`.
+
+## 6. Try the demo
+
+On first startup, the backend creates sample accounts, a vehicle, a station, and a charger if they do not already exist. Use these local demonstration accounts:
 
 | Role | Email | Password |
 | --- | --- | --- |
@@ -43,152 +189,61 @@ On first startup, the backend creates sample accounts, a vehicle, a station, and
 | Station operator | `operator@smartcharge.com` | `123456` |
 | Administrator | `admin@smartcharge.com` | `123456` |
 
-These are local demonstration credentials. Change or remove them before using the application in any shared or production environment.
+Suggested walkthrough:
 
-## Technology
+1. Sign in as the driver and review the vehicle, then create a charging request.
+2. Try charger/connector selection and review request status, queue estimates, and charging history.
+3. Use the operator account to inspect stations and update charger or station status.
+4. Use the administrator account to review requests and emergencies, view analytics, and change the scheduling algorithm.
+5. Try the guided chatbot from the driver pages.
 
-- Frontend: HTML, CSS, and browser JavaScript, served as static resources by Spring Boot.
-- Backend: Java 25, Spring Boot 4.1.1, Spring Web, Spring Data JPA, and Spring Security.
-- Local emergency NLP: Python, CPU-only PyTorch, Hugging Face Transformers, and a pinned DeBERTa-v3-base zero-shot model. The weights are downloaded locally and are not committed to Git.
-- Database: PostgreSQL.
-- Build: Apache Maven.
-- Optional routing: OpenRouteService (ORS); OSRM is used as a fallback when an ORS request cannot be completed.
+New driver signups require OTP email verification when Brevo is configured. Demo accounts are available for local testing without email delivery.
 
-## Requirements
+**These demo credentials are public and are not safe for a shared or production deployment. Change or remove them before exposing the app to other users.** Use HTTPS and configure deployment secrets through the hosting environment for any internet-facing deployment.
 
-Install the following on your machine:
+## Configuration reference
 
-1. **Java Development Kit (JDK) 25** and ensure `java` is on your `PATH` (`java -version`).
-2. **Apache Maven** and ensure `mvn` is on your `PATH` (`mvn -version`). This repository does not include the Maven wrapper.
-3. **PostgreSQL** running locally and accepting connections on port `5432`.
-4. Git, if you are cloning the repository.
-5. **64-bit Python 3.11** for the local emergency NLP classifier.
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DB_USERNAME` | No; defaults to `postgres` | PostgreSQL username |
+| `DB_PASSWORD` | Yes | PostgreSQL password |
+| `SMARTCHARGE_JWT_SECRET` | Yes | Signs authentication tokens; use a private value of at least 32 UTF-8 bytes |
+| `ORS_API_KEY` | No | Enables OpenRouteService routing |
+| `ORS_BASE_URL` | No | Overrides the routing service base URL |
+| `BREVO_API_KEY` | No | Enables Brevo transactional email |
+| `BREVO_SENDER_EMAIL` | No | Verified sender address used for OTP email |
+| `BREVO_SENDER_NAME` | No | Sender display name; defaults to `SmartCharge` |
+| `SMARTCHARGE_NLP_URL` | No | NLP service URL; defaults to `http://127.0.0.1:8090` |
+| `SMARTCHARGE_NLP_TIMEOUT_SECONDS` | No | NLP request timeout; defaults to 45 seconds |
+| `SESSION_COOKIE_SECURE` | No | Set `true` when deployed behind HTTPS; defaults to `false` for local HTTP |
 
-The provided `start-backend.bat` helper is for Windows. On macOS or Linux, run the Maven command shown below from the `backend` directory.
+## Troubleshooting
 
-## Download the project
+- **Database connection refused:** Start Docker/the PostgreSQL service and confirm it listens on port `5432`.
+- **Database does not exist:** Create the `smartcharge` database or check `spring.datasource.url`.
+- **Password authentication failed:** Make sure `DB_USERNAME` and `DB_PASSWORD` match the PostgreSQL container or server.
+- **Could not resolve `SMARTCHARGE_JWT_SECRET`:** Set that variable in the same environment used to start the backend.
+- **Maven or Java version error:** Confirm `java -version` and `mvn -version` use JDK 25.
+- **Port 8080 is already in use:** Stop the other service or change `server.port` in `application.properties`.
+- **NLP requests stay pending:** Complete the Python setup/model download and verify the NLP service is ready on `127.0.0.1:8090`.
+- **OTP email is not delivered:** Configure a valid Brevo API key and verified sender email address.
+- **Routing is unavailable:** Configure `ORS_API_KEY`; routing also needs internet access and valid station coordinates.
 
-Clone the repository and enter its directory:
-
-```bash
-git clone <repository-url>
-cd SmartCharge
-```
-
-Replace `<repository-url>` with the HTTPS or SSH clone URL shown by your Git hosting service. Alternatively, download and extract the repository ZIP, then open a terminal in the extracted `SmartCharge` directory.
-
-## Configure PostgreSQL
-
-Create a database named `smartcharge` and make sure the PostgreSQL account matches the connection settings in `backend/src/main/resources/application.properties`:
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/smartcharge
-spring.datasource.username=postgres
-spring.datasource.password=postgres
-```
-
-For example, with `psql` and a PostgreSQL administrator account:
-
-```sql
-CREATE DATABASE smartcharge;
-```
-
-If your local PostgreSQL username or password differs, update those three `spring.datasource.*` settings before starting the app. The database user needs permission to create and update tables. Hibernate is configured with `ddl-auto=update`, so tables are created/updated on startup; `database/schema.sql` is provided as a reference and is not automatically executed by the application.
-
-## Optional: enable road routing
-
-Station routes require an OpenRouteService API key. Set `ORS_API_KEY` in the environment where the backend runs. The backend starts without it, but the route endpoint will report that routing is not configured. If ORS is temporarily unreachable, the backend attempts the public OSRM fallback; that fallback also needs internet access.
-
-On Windows, you can put the key in the ignored `.ors-key` file at the project root for the included batch script to read. Do not commit or share this file. Alternatively, set the variable in PowerShell before starting:
-
-```powershell
-$env:ORS_API_KEY = "your-openrouteservice-api-key"
-```
-
-On macOS or Linux:
-
-```bash
-export ORS_API_KEY="your-openrouteservice-api-key"
-```
-
-## Set up local emergency NLP
-
-SmartCharge uses the pre-trained [`MoritzLaurer/deberta-v3-base-zeroshot-v1.1-all-33`](https://huggingface.co/MoritzLaurer/deberta-v3-base-zeroshot-v1.1-all-33) model. It compares the emergency reason with two fixed descriptions; it does not train a model or call a hosted inference API. The model is English-only. Its model card reports an MIT license for the base model and discusses the training-data licenses and limitations; review the card and cite the associated paper for an academic demonstration.
-
-On Windows, from the project root, run these once:
-
-```powershell
-Set-Location .\backend\nlp
-powershell -ExecutionPolicy Bypass -File .\setup-nlp.ps1
-powershell -ExecutionPolicy Bypass -File .\download-model.ps1
-```
-
-This creates a project-local Python environment, installs CPU-only PyTorch and the service dependencies, and downloads the pinned model snapshot into `backend/nlp/model/` (about 380 MB). The environment and model weights are ignored by Git. Internet access is needed for setup and the first model download; inference then runs locally.
-
-For each local run, start `start-backend.bat`. It opens `backend/nlp/start-nlp.bat` in a separate NLP window when the matching NLP service is not already running, waits for the model to load, then starts Spring Boot in the original window. Keep both windows open while using the application. The local NLP service is bound to loopback and is called only by Spring Boot. If it is stopped, fails to load the model, or returns an error, the booking still succeeds and its emergency request remains pending for the administrator.
-
-The classifier treats genuine immediate danger, accidents or injuries, urgent medical needs, and safety hazards as serious emergencies. VIP status or urgency based only on work, meetings, appointments, deadlines, or convenience does not qualify; those priority-only claims are classified as `ROUTINE` unless the reason also states a medical or safety emergency. `SERIOUS` approves emergency priority and `ROUTINE` declines priority. The stored score is a model score, not a calibrated probability or a guarantee. Admins can change either decision on the Emergency Requests page. If a session has already started, changing its emergency decision does not stop that active simulated session. Requests without an NLP result remain pending. The dashboard shows the original NLP result and whether the latest decision came from NLP or an administrator.
-
-The model card's recommended Transformers pipeline and zero-shot behavior are documented [here](https://huggingface.co/MoritzLaurer/deberta-v3-base-zeroshot-v1.1-all-33). For academic citation, see the paper linked from that card: [Building Efficient Universal Classifiers with Natural Language Inference](https://arxiv.org/abs/2312.17543).
-
-## Run the application
-
-### Windows
-
-From the project root, run:
-
-```bat
-start-backend.bat
-```
-
-The script checks PostgreSQL and port `8080`, starts the local NLP service in a separate terminal if needed, waits until it is ready, then starts Spring Boot and opens the frontend at `http://localhost:8080/` when the server responds. Keep both terminals open while using the application; closing either service stops that part of the project.
-
-### macOS or Linux
-
-From the project root, start the backend with Maven:
-
-```bash
-cd backend
-mvn spring-boot:run
-```
-
-When startup completes, open [http://localhost:8080/](http://localhost:8080/) in a browser. Leave the terminal running while you use the site. To stop the backend, press `Ctrl+C`.
-
-The frontend is served by Spring Boot, so do not open the HTML files directly from the filesystem. The browser pages expect the backend at `http://localhost:8080`.
-
-## First use
-
-1. Open `http://localhost:8080/` and choose a role.
-2. Sign in using one of the demo accounts above, or register a driver account.
-3. As a driver, manage vehicles, create a charging request, and view request/session status.
-4. As an operator, manage station and charger records and their statuses.
-5. As an administrator, review requests and emergency requests, and choose the scheduling algorithm.
-
-## Project layout
+## Project structure
 
 ```text
 SmartCharge/
 ├── backend/
-│   ├── pom.xml                         # Maven dependencies and build configuration
-│   ├── nlp/                            # Local Python service and model setup scripts
-│   └── src/main/
-│       ├── java/smartcharge/           # REST API, scheduling, allocation, and services
-│       └── resources/application.properties
-├── database/schema.sql                 # Reference PostgreSQL schema
-├── frontend/                           # User, operator, and admin HTML pages
+│   ├── nlp/                            # Python NLP service and setup scripts
+│   ├── src/main/java/smartcharge/     # Spring Boot application code
+│   └── src/main/resources/            # Backend configuration
+├── database/
+│   └── schema.sql                      # Reference PostgreSQL schema
+├── frontend/                           # Driver, operator, and admin pages
 ├── start-backend.bat                   # Windows startup helper
-└── open-frontend.ps1                   # Opens the site after backend startup
+└── README.md
 ```
-
-## Troubleshooting
-
-- **Database connection refused:** Start PostgreSQL and verify it listens on `localhost:5432`.
-- **Database does not exist:** Create `smartcharge` before starting the backend.
-- **Password authentication failed:** Update the datasource username/password in `backend/src/main/resources/application.properties` to match your PostgreSQL setup.
-- **Maven or Java version error:** Confirm `mvn -version` uses JDK 25 and `java -version` reports Java 25.
-- **Port 8080 is already in use:** Stop the other service using the port or change `server.port` in `application.properties`, then open the corresponding local URL.
-- **Routing unavailable:** Set a valid `ORS_API_KEY`; routing also requires internet access and valid coordinates for stations.
 
 ## License
 
-No license file is currently included. Add a `LICENSE` file if you intend to grant others explicit reuse rights.
+This project is licensed under the [MIT License](LICENSE).
